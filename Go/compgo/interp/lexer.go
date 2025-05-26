@@ -1,14 +1,17 @@
 package interp
 
+import "unicode/utf8"
+
 type Lexer struct {
-	input        string
+	inputUtf8    []byte
+	inputStr     string
 	position     int
 	readPosition int
-	ch           byte
+	ch           rune
 }
 
 func NewLexer(input string) *Lexer {
-	return &Lexer{input, 0, 0, 0}
+	return &Lexer{[]byte(input), input, 0, 0, 0}
 }
 
 var mapTokenLexer = map[string]TokenType{
@@ -23,14 +26,17 @@ var mapTokenLexer = map[string]TokenType{
 }
 
 func (l *Lexer) NextToken() Token {
-	if l.readPosition == len(l.input) {
+	if len(l.inputUtf8) <= 0 {
 		return Token{Eof, ""}
 	}
-	tch := string(l.input[l.readPosition])
-	t, ok := mapTokenLexer[string(l.input[l.readPosition])]
+	r, size := utf8.DecodeRune(l.inputUtf8)
+	l.readPosition += size
+	l.inputUtf8 = l.inputUtf8[size:]
+	tch := string(r)
+	l.position++
+	t, ok := mapTokenLexer[tch]
 	if !ok {
 		return Token{Illegal, ""}
 	}
-	l.readPosition++
 	return Token{t, tch}
 }
