@@ -38,3 +38,36 @@ const (
 	Lte
 	Neq
 )
+
+func (t TokenType) String() string {
+	s := mapTokenDisplay[t]
+	return s
+}
+
+var mapTokenDisplay = map[TokenType]string{
+	Assign:    "=",
+	Plus:      "+",
+	Lparen:    "(",
+	Rparen:    ")",
+	Lbrace:    "{",
+	Rbrace:    "}",
+	Comma:     ",",
+	Semicolon: ";",
+	Let:       "let",
+	Function:  "fn",
+	Bang:      "!",
+	Star:      "*",
+	Slash:     "/",
+	Gt:        ">",
+	Lt:        "<",
+	Minus:     "-",
+	Return:    "return",
+	If:        "if",
+	Else:      "else",
+	True:      "true",
+	False:     "false",
+	Neq:       "!=",
+	Gte:       ">=",
+	Lte:       "<=",
+	Eq:        "==",
+}
