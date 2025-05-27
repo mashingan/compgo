@@ -2,7 +2,7 @@ package interp
 
 import "testing"
 
-func TestNextToken(t *testing.T) {
+func TestNextToken_1(t *testing.T) {
 	input := `=+(){},;`
 	tests := []struct {
 		expectedType    TokenType
@@ -30,8 +30,10 @@ func TestNextToken(t *testing.T) {
 				i, tt.expectedLiteral, tok.Literal)
 		}
 	}
+}
 
-	input = `let five異能 = 5;
+func TestNextToken_2(t *testing.T) {
+	input := `let five異能 = 5;
 let ten世界 = 10;
 
 let add特異点 = fn(x, y) {
@@ -39,11 +41,8 @@ let add特異点 = fn(x, y) {
 };
 
 let result = add特異点(five, ten);
-!-/*5;
-5 < 10 > 5;
 `
-
-	tests = []struct {
+	tests := []struct {
 		expectedType    TokenType
 		expectedLiteral string
 	}{
@@ -83,6 +82,30 @@ let result = add特異点(five, ten);
 		{Ident, "ten"},
 		{Rparen, ")"},
 		{Semicolon, ";"},
+	}
+	l := NewLexer(input)
+	for i, tt := range tests {
+		tok := l.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got %q",
+				i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - token literal wrong. expected=%q, got %q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+}
+func TestNextToken_3(t *testing.T) {
+	input := `!-/*5;
+	5 < 10 > 5;
+	`
+
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+
 		{Bang, "!"},
 		{Minus, "-"},
 		{Slash, "/"},
@@ -97,7 +120,9 @@ let result = add特異点(five, ten);
 		{Semicolon, ";"},
 		{Eof, ""},
 	}
-	l = NewLexer(input)
+
+	l := NewLexer(input)
+
 	for i, tt := range tests {
 		tok := l.NextToken()
 		if tok.Type != tt.expectedType {
@@ -109,4 +134,86 @@ let result = add特異点(five, ten);
 				i, tt.expectedLiteral, tok.Literal)
 		}
 	}
+}
+
+func TestNextToken_4(t *testing.T) {
+
+	input := `if (5 < 10) {
+		return true;
+	} else if (10 > 5) {
+		return false;
+	}`
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{If, "if"},
+		{Lparen, "("},
+		{Int, "5"},
+		{Lt, "<"},
+		{Int, "10"},
+		{Rparen, ")"},
+		{Lbrace, "{"},
+		{Return, "return"},
+		{True, "true"},
+		{Semicolon, ";"},
+		{Rbrace, "}"},
+		{Else, "else"},
+		{If, "if"},
+		{Lparen, "("},
+		{Int, "10"},
+		{Gt, ">"},
+		{Int, "5"},
+		{Rparen, ")"},
+		{Lbrace, "{"},
+		{Return, "return"},
+		{False, "false"},
+		{Semicolon, ";"},
+		{Rbrace, "}"},
+	}
+	l := NewLexer(input)
+
+	for i, tt := range tests {
+		tok := l.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got %q",
+				i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - token literal wrong. expected=%q, got %q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+
+}
+
+func TestNextToken_5(t *testing.T) {
+
+	input := `5 == 10; 10 != 9;
+5 <= 9;
+10 >= 10;
+`
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{Int, "5"}, {Eq, "=="}, {Int, "10"}, {Semicolon, ";"},
+		{Int, "10"}, {Neq, "!="}, {Int, "9"}, {Semicolon, ";"},
+		{Int, "5"}, {Lte, "<="}, {Int, "9"}, {Semicolon, ";"},
+		{Int, "10"}, {Gte, ">="}, {Int, "10"}, {Semicolon, ";"},
+	}
+	l := NewLexer(input)
+
+	for i, tt := range tests {
+		tok := l.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got %q",
+				i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - token literal wrong. expected=%q, got %q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+
 }

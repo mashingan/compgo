@@ -18,26 +18,36 @@ func NewLexer(input string) *Lexer {
 }
 
 var mapTokenLexer = map[string]TokenType{
-	"=":   Assign,
-	"+":   Plus,
-	"(":   Lparen,
-	")":   Rparen,
-	"{":   Lbrace,
-	"}":   Rbrace,
-	",":   Comma,
-	";":   Semicolon,
-	"let": Let,
-	"fn":  Function,
-	"!":   Bang,
-	"*":   Star,
-	"/":   Slash,
-	">":   Gt,
-	"<":   Lt,
-	"-":   Minus,
+	"=":      Assign,
+	"+":      Plus,
+	"(":      Lparen,
+	")":      Rparen,
+	"{":      Lbrace,
+	"}":      Rbrace,
+	",":      Comma,
+	";":      Semicolon,
+	"let":    Let,
+	"fn":     Function,
+	"!":      Bang,
+	"*":      Star,
+	"/":      Slash,
+	">":      Gt,
+	"<":      Lt,
+	"-":      Minus,
+	"return": Return,
+	"if":     If,
+	"else":   Else,
+	"true":   True,
+	"false":  False,
+	"!=":     Neq,
+	">=":     Gte,
+	"<=":     Lte,
+	"==":     Eq,
 }
 
 func (l *Lexer) skipWhitespaces() {
 	for r, size := utf8.DecodeRune(l.inputUtf8); unicode.IsSpace(r) && len(l.inputUtf8) > 0; r, size = utf8.DecodeRune(l.inputUtf8) {
+		l.position++
 		l.inputUtf8 = l.inputUtf8[size:]
 	}
 }
@@ -45,9 +55,15 @@ func (l *Lexer) skipWhitespaces() {
 func (l *Lexer) getUntilSpaceOrOperator(p *[]byte) {
 	for r, size := utf8.DecodeRune(l.inputUtf8); !unicode.IsSpace(r) && len(l.inputUtf8) > 0; r, size = utf8.DecodeRune(l.inputUtf8) {
 		if _, ok := mapTokenLexer[string(r)]; ok {
-			// skip in case find (){},;+=
+			// in case of combined operator
+			pp := utf8.AppendRune(*p, r)
+			if _, ok := mapTokenLexer[string(pp)]; ok {
+				*p = pp
+				return
+			}
 			return
 		}
+		l.position++
 		l.inputUtf8 = l.inputUtf8[size:]
 		*p = utf8.AppendRune(*p, r)
 	}
@@ -76,6 +92,28 @@ func (l *Lexer) tokenize(r rune) Token {
 	return Token{Ident, bstr}
 }
 
+func (l *Lexer) getCombined(t TokenType, r rune) Token {
+	switch string(r) {
+	case "=":
+		fallthrough
+	case "<":
+		fallthrough
+	case ">":
+		fallthrough
+	case "!":
+		rr := utf8.AppendRune(nil, r)
+		r, size := utf8.DecodeRune(l.inputUtf8)
+		rr = utf8.AppendRune(rr, r)
+		tt, ok := mapTokenLexer[string(rr)]
+		if ok {
+			l.position++
+			l.inputUtf8 = l.inputUtf8[size:]
+			return Token{tt, string(rr)}
+		}
+	}
+	return Token{t, string(r)}
+}
+
 func (l *Lexer) getToken() Token {
 	l.skipWhitespaces()
 	if len(l.inputUtf8) <= 0 {
@@ -84,11 +122,12 @@ func (l *Lexer) getToken() Token {
 	r, size := utf8.DecodeRune(l.inputUtf8)
 	l.inputUtf8 = l.inputUtf8[size:]
 	t, ok := mapTokenLexer[string(r)]
+	l.position++
 	if !ok {
 		// means it's not a single rune
 		return l.tokenize(r)
 	}
-	return Token{t, string(r)}
+	return l.getCombined(t, r)
 }
 
 func (l *Lexer) NextToken() Token {

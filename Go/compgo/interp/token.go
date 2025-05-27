@@ -28,4 +28,13 @@ const (
 	Let
 	Lt
 	Gt
+	Return
+	If
+	Else
+	True
+	False
+	Eq
+	Gte
+	Lte
+	Neq
 )
