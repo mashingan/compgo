@@ -38,7 +38,9 @@ let add特異点 = fn(x, y) {
 	x + y;
 };
 
-let result = add(five, ten);
+let result = add特異点(five, ten);
+!-/*5;
+5 < 10 > 5;
 `
 
 	tests = []struct {
@@ -46,17 +48,17 @@ let result = add(five, ten);
 		expectedLiteral string
 	}{
 		{Let, "let"},
-		{Ident, "five"},
+		{Ident, "five異能"},
 		{Assign, "="},
 		{Int, "5"},
 		{Semicolon, ";"},
 		{Let, "let"},
-		{Ident, "ten"},
+		{Ident, "ten世界"},
 		{Assign, "="},
 		{Int, "10"},
 		{Semicolon, ";"},
 		{Let, "let"},
-		{Ident, "add"},
+		{Ident, "add特異点"},
 		{Assign, "="},
 		{Function, "fn"},
 		{Lparen, "("},
@@ -74,12 +76,24 @@ let result = add(five, ten);
 		{Let, "let"},
 		{Ident, "result"},
 		{Assign, "="},
-		{Ident, "add"},
+		{Ident, "add特異点"},
 		{Lparen, "("},
 		{Ident, "five"},
 		{Comma, ","},
 		{Ident, "ten"},
 		{Rparen, ")"},
+		{Semicolon, ";"},
+		{Bang, "!"},
+		{Minus, "-"},
+		{Slash, "/"},
+		{Star, "*"},
+		{Int, "5"},
+		{Semicolon, ";"},
+		{Int, "5"},
+		{Lt, "<"},
+		{Int, "10"},
+		{Gt, ">"},
+		{Int, "5"},
 		{Semicolon, ";"},
 		{Eof, ""},
 	}

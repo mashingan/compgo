@@ -18,62 +18,82 @@ func NewLexer(input string) *Lexer {
 }
 
 var mapTokenLexer = map[string]TokenType{
-	"=": Assign,
-	"+": Plus,
-	"(": Lparen,
-	")": Rparen,
-	"{": Lbrace,
-	"}": Rbrace,
-	",": Comma,
-	";": Semicolon,
+	"=":   Assign,
+	"+":   Plus,
+	"(":   Lparen,
+	")":   Rparen,
+	"{":   Lbrace,
+	"}":   Rbrace,
+	",":   Comma,
+	";":   Semicolon,
+	"let": Let,
+	"fn":  Function,
+	"!":   Bang,
+	"*":   Star,
+	"/":   Slash,
+	">":   Gt,
+	"<":   Lt,
+	"-":   Minus,
 }
 
 func (l *Lexer) skipWhitespaces() {
-	r, size := utf8.DecodeRune(l.inputUtf8)
-	for unicode.IsSpace(r) {
+	for r, size := utf8.DecodeRune(l.inputUtf8); unicode.IsSpace(r) && len(l.inputUtf8) > 0; r, size = utf8.DecodeRune(l.inputUtf8) {
 		l.inputUtf8 = l.inputUtf8[size:]
-		r, size = utf8.DecodeRune(l.inputUtf8)
 	}
+}
+
+func (l *Lexer) getUntilSpaceOrOperator(p *[]byte) {
+	for r, size := utf8.DecodeRune(l.inputUtf8); !unicode.IsSpace(r) && len(l.inputUtf8) > 0; r, size = utf8.DecodeRune(l.inputUtf8) {
+		if _, ok := mapTokenLexer[string(r)]; ok {
+			// skip in case find (){},;+=
+			return
+		}
+		l.inputUtf8 = l.inputUtf8[size:]
+		*p = utf8.AppendRune(*p, r)
+	}
+}
+
+func (l *Lexer) tokenize(r rune) Token {
+	buf := utf8.AppendRune(nil, r)
+	l.getUntilSpaceOrOperator(&buf)
+	cursize := 0
+	isNumber := true
+	for rr, rsize := utf8.DecodeRune(buf[cursize:]); len(buf[cursize:]) > 0; rr, rsize = utf8.DecodeRune(buf[cursize:]) {
+		if !unicode.IsNumber(rr) {
+			isNumber = false
+			break
+		}
+		cursize += rsize
+	}
+	bstr := string(buf)
+	if isNumber {
+		return Token{Int, bstr}
+	}
+	t, ok := mapTokenLexer[bstr]
+	if ok {
+		return Token{t, bstr}
+	}
+	return Token{Ident, bstr}
 }
 
 func (l *Lexer) getToken() Token {
 	l.skipWhitespaces()
+	if len(l.inputUtf8) <= 0 {
+		return Token{Eof, ""}
+	}
 	r, size := utf8.DecodeRune(l.inputUtf8)
+	l.inputUtf8 = l.inputUtf8[size:]
 	t, ok := mapTokenLexer[string(r)]
 	if !ok {
+		// means it's not a single rune
+		return l.tokenize(r)
 	}
+	return Token{t, string(r)}
 }
 
 func (l *Lexer) NextToken() Token {
 	if len(l.inputUtf8) <= 0 {
 		return Token{Eof, ""}
 	}
-	l.skipWhitespaces()
-	// var tch string
-	// rr := make([]byte, 0)
-	// for len(l.inputUtf8) > 0 {
-	// 	r, size := utf8.DecodeRune(l.inputUtf8)
-	// 	l.readPosition += size
-	// 	l.inputUtf8 = l.inputUtf8[size:]
-	// 	if !unicode.IsSpace(r) {
-	// 		continue
-	// 	}
-	// 	tch = string(r)
-	// }
-	r, size := utf8.DecodeRune(l.inputUtf8)
-	spaceTotal := 0
-	for unicode.IsSpace(r) {
-		_, size = utf8.DecodeRune(l.inputUtf8[spaceTotal:])
-		spaceTotal += size
-		l.readPosition += size
-	}
-	l.readPosition += size
-	l.inputUtf8 = l.inputUtf8[size:]
-	tch := string(r)
-	l.position++
-	t, ok := mapTokenLexer[tch]
-	if !ok {
-		return Token{Illegal, ""}
-	}
-	return Token{t, tch}
+	return l.getToken()
 }

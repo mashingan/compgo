@@ -14,6 +14,10 @@ const (
 	Int
 	Assign
 	Plus
+	Minus
+	Star
+	Slash
+	Bang
 	Comma
 	Semicolon
 	Lparen
@@ -22,4 +26,6 @@ const (
 	Rbrace
 	Function
 	Let
+	Lt
+	Gt
 )
