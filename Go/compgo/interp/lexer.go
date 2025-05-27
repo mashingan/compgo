@@ -28,10 +28,27 @@ var mapTokenLexer = map[string]TokenType{
 	";": Semicolon,
 }
 
+func (l *Lexer) skipWhitespaces() {
+	r, size := utf8.DecodeRune(l.inputUtf8)
+	for unicode.IsSpace(r) {
+		l.inputUtf8 = l.inputUtf8[size:]
+		r, size = utf8.DecodeRune(l.inputUtf8)
+	}
+}
+
+func (l *Lexer) getToken() Token {
+	l.skipWhitespaces()
+	r, size := utf8.DecodeRune(l.inputUtf8)
+	t, ok := mapTokenLexer[string(r)]
+	if !ok {
+	}
+}
+
 func (l *Lexer) NextToken() Token {
 	if len(l.inputUtf8) <= 0 {
 		return Token{Eof, ""}
 	}
+	l.skipWhitespaces()
 	// var tch string
 	// rr := make([]byte, 0)
 	// for len(l.inputUtf8) > 0 {
