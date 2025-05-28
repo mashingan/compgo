@@ -70,4 +70,6 @@ var mapTokenDisplay = map[TokenType]string{
 	Gte:       ">=",
 	Lte:       "<=",
 	Eq:        "==",
+	Ident:     "Ident",
+	Int:       "Int",
 }
