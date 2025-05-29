@@ -2,16 +2,64 @@ package interp
 
 import (
 	"fmt"
+	"strconv"
 )
 
+const (
+	_ uint8 = iota
+	Lowest
+	Equals
+	Lessgreater
+	Sum
+	Product
+	Prefix
+	Call
+)
+
+type (
+	prefixParseFn func() Expression
+	infixParseFn  func(Expression) Expression
+)
 type Parser struct {
 	l                    *Lexer
 	currToken, peekToken Token
 	errors               []string
+
+	prefixs map[TokenType]prefixParseFn
+	infixs  map[TokenType]infixParseFn
+}
+
+var precedences = map[TokenType]uint8{
+	Eq:    Equals,
+	Neq:   Equals,
+	Lt:    Lessgreater,
+	Gt:    Lessgreater,
+	Lte:   Lessgreater,
+	Gte:   Lessgreater,
+	Plus:  Sum,
+	Minus: Sum,
+	Slash: Product,
+	Star:  Product,
 }
 
 func NewParser(l *Lexer) *Parser {
 	p := &Parser{l: l}
+	p.prefixs = map[TokenType]prefixParseFn{}
+	p.prefixs[Ident] = p.parseIdentifier
+	p.prefixs[Int] = p.parseIntLiteral
+	p.prefixs[Bang] = p.parsePrefixExpression
+	p.prefixs[Minus] = p.parsePrefixExpression
+	p.infixs = map[TokenType]infixParseFn{}
+	p.infixs[Plus] = p.parseInfixExpression
+	p.infixs[Minus] = p.parseInfixExpression
+	p.infixs[Star] = p.parseInfixExpression
+	p.infixs[Slash] = p.parseInfixExpression
+	p.infixs[Gt] = p.parseInfixExpression
+	p.infixs[Lt] = p.parseInfixExpression
+	p.infixs[Eq] = p.parseInfixExpression
+	p.infixs[Neq] = p.parseInfixExpression
+	p.infixs[Gte] = p.parseInfixExpression
+	p.infixs[Lte] = p.parseInfixExpression
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -34,9 +82,7 @@ func (p *Parser) ParseProgram() *Program {
 	program.Statements = []Statement{}
 	for p.currToken.Type != Eof {
 		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
-		}
+		program.Statements = append(program.Statements, stmt)
 		p.nextToken()
 	}
 	return program
@@ -48,8 +94,9 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseLetStatement()
 	case Return:
 		return p.parseReturnStatement()
+	default:
+		return p.parseExpressionStatement()
 	}
-	return nil
 }
 
 func (p *Parser) expectNext(t TokenType) bool {
@@ -83,4 +130,84 @@ func (p *Parser) parseReturnStatement() *ReturnStatement {
 		p.nextToken()
 	}
 	return stmt
+}
+
+func (p *Parser) parseExpressionStatement() *ExpressionStatement {
+	stmt := &ExpressionStatement{Token: p.currToken}
+	stmt.Expression = p.parseExpression(Lowest)
+	if p.peekToken.Type == Semicolon {
+		p.nextToken()
+	}
+	return stmt
+}
+
+func (p *Parser) parseExpression(precedence uint8) Expression {
+	prefix := p.prefixs[p.currToken.Type]
+	if prefix == nil {
+		msg := fmt.Sprintf("no prefix parse function for %s found", p.currToken.Type)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	left := prefix()
+	for p.peekToken.Type != Semicolon && precedence < p.peekPrecedence() {
+		infix := p.infixs[p.peekToken.Type]
+		if infix == nil {
+			return left
+		}
+		p.nextToken()
+		left = infix(left)
+	}
+	return left
+}
+
+func (p *Parser) parseIdentifier() Expression {
+	return &Identifier{Token: p.currToken, Value: p.currToken.Literal}
+}
+
+func (p *Parser) parseIntLiteral() Expression {
+	lit := &IntLiteral{Token: p.currToken}
+	value, err := strconv.Atoi(p.currToken.Literal)
+	if err != nil {
+		msg := fmt.Sprintf("cannot parse %q as integer", p.currToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
+}
+
+func (p *Parser) parsePrefixExpression() Expression {
+	exp := &PrefixExpression{
+		Token:    p.currToken,
+		Operator: p.currToken.Literal,
+	}
+	p.nextToken()
+	exp.Right = p.parseExpression(Prefix)
+	return exp
+}
+
+func (p *Parser) peekPrecedence() uint8 {
+	if p, ok := precedences[p.peekToken.Type]; ok {
+		return p
+	}
+	return Lowest
+}
+
+func (p *Parser) currPrecedence() uint8 {
+	if p, ok := precedences[p.currToken.Type]; ok {
+		return p
+	}
+	return Lowest
+}
+
+func (p *Parser) parseInfixExpression(left Expression) Expression {
+	e := &InfixExpression{
+		Left:     left,
+		Token:    p.currToken,
+		Operator: p.currToken.Literal,
+	}
+	pred := p.currPrecedence()
+	p.nextToken()
+	e.Right = p.parseExpression(pred)
+	return e
 }

@@ -92,3 +92,36 @@ func (e *ExpressionStatement) String() string {
 	}
 	return ""
 }
+
+type IntLiteral struct {
+	Token
+	Value int
+}
+
+func (i *IntLiteral) expressionNode()      {}
+func (i *IntLiteral) TokenLiteral() string { return i.Literal }
+func (i *IntLiteral) String() string       { return i.Literal }
+
+type PrefixExpression struct {
+	Token
+	Operator string
+	Right    Expression
+}
+
+func (p *PrefixExpression) expressionNode()      {}
+func (p *PrefixExpression) TokenLiteral() string { return p.Literal }
+func (p *PrefixExpression) String() string {
+	return fmt.Sprintf("(%s%s)", p.Operator, p.Right.String())
+}
+
+type InfixExpression struct {
+	Token
+	Operator    string
+	Left, Right Expression
+}
+
+func (p *InfixExpression) expressionNode()      {}
+func (p *InfixExpression) TokenLiteral() string { return p.Literal }
+func (p *InfixExpression) String() string {
+	return fmt.Sprintf("(%s%s%s)", p.Left.String(), p.Operator, p.Right.String())
+}
