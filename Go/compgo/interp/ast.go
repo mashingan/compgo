@@ -1,8 +1,8 @@
 package interp
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 )
 
 type Node interface {
@@ -32,7 +32,7 @@ func (p *Program) TokenLiteral() string {
 }
 
 func (p *Program) String() string {
-	var out bytes.Buffer
+	var out strings.Builder
 	for _, s := range p.Statements {
 		out.WriteString(s.String())
 	}
@@ -124,4 +124,44 @@ func (p *InfixExpression) expressionNode()      {}
 func (p *InfixExpression) TokenLiteral() string { return p.Literal }
 func (p *InfixExpression) String() string {
 	return fmt.Sprintf("(%s%s%s)", p.Left.String(), p.Operator, p.Right.String())
+}
+
+type Boolean struct {
+	Token
+	Value bool
+}
+
+func (b *Boolean) expressionNode()      {}
+func (b *Boolean) TokenLiteral() string { return b.Literal }
+func (b *Boolean) String() string       { return b.Literal }
+
+type IfExpression struct {
+	Token
+	Condition  Expression
+	Then, Else *BlockStatement
+}
+
+func (i *IfExpression) expressionNode()      {}
+func (i *IfExpression) TokenLiteral() string { return i.Literal }
+func (i *IfExpression) String() string {
+	elseLeaf := ""
+	if i.Else != nil {
+		elseLeaf = fmt.Sprintf("else %s", i.Else.String())
+	}
+	return fmt.Sprintf("if %s %s%s", i.Condition.String(), i.Then.String(), elseLeaf)
+}
+
+type BlockStatement struct {
+	Token
+	Statements []Statement
+}
+
+func (b *BlockStatement) expressionNode()      {}
+func (b *BlockStatement) TokenLiteral() string { return b.Literal }
+func (b *BlockStatement) String() string {
+	var sb strings.Builder
+	for _, s := range b.Statements {
+		sb.WriteString(s.String())
+	}
+	return sb.String()
 }

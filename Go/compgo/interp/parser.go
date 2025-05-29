@@ -49,6 +49,10 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[Int] = p.parseIntLiteral
 	p.prefixs[Bang] = p.parsePrefixExpression
 	p.prefixs[Minus] = p.parsePrefixExpression
+	p.prefixs[True] = p.parseBoolean
+	p.prefixs[False] = p.parseBoolean
+	p.prefixs[Lparen] = p.parseGroupExpression
+	p.prefixs[If] = p.parseIfExpression
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression
@@ -210,4 +214,52 @@ func (p *Parser) parseInfixExpression(left Expression) Expression {
 	p.nextToken()
 	e.Right = p.parseExpression(pred)
 	return e
+}
+
+func (p *Parser) parseBoolean() Expression {
+	return &Boolean{p.currToken, p.currToken.Type == True}
+}
+
+func (p *Parser) parseGroupExpression() Expression {
+	p.nextToken()
+	exp := p.parseExpression(Lowest)
+	if !p.expectNext(Rparen) {
+		return nil
+	}
+	return exp
+}
+
+func (p *Parser) parseIfExpression() Expression {
+	ifexp := &IfExpression{Token: p.currToken}
+	if !p.expectNext(Lparen) {
+		return nil
+	}
+	p.nextToken()
+	ifexp.Condition = p.parseExpression(Lowest)
+	if !p.expectNext(Rparen) {
+		return nil
+	}
+	if !p.expectNext(Lbrace) {
+		return nil
+	}
+	ifexp.Then = p.parseBlockStatement()
+	if p.peekToken.Type == Else {
+		p.nextToken()
+		if !p.expectNext(Lbrace) {
+			return nil
+		}
+		ifexp.Else = p.parseBlockStatement()
+	}
+	return ifexp
+}
+
+func (p *Parser) parseBlockStatement() *BlockStatement {
+	b := &BlockStatement{Token: p.currToken}
+	b.Statements = []Statement{}
+	p.nextToken()
+	for p.currToken.Type != Rbrace && p.currToken.Type != Eof {
+		b.Statements = append(b.Statements, p.parseStatement())
+		p.nextToken()
+	}
+	return b
 }
