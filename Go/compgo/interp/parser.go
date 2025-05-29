@@ -53,6 +53,7 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[False] = p.parseBoolean
 	p.prefixs[Lparen] = p.parseGroupExpression
 	p.prefixs[If] = p.parseIfExpression
+	p.prefixs[Function] = p.parseFuncLiteral
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression
@@ -262,4 +263,25 @@ func (p *Parser) parseBlockStatement() *BlockStatement {
 		p.nextToken()
 	}
 	return b
+}
+
+func (p *Parser) parseFuncLiteral() Expression {
+	fn := &FuncLiteral{Token: p.currToken}
+	if !p.expectNext(Lparen) {
+		return nil
+	}
+	p.nextToken()
+	fn.Parameters = []Expression{}
+	for p.currToken.Type != Rparen {
+		fn.Parameters = append(fn.Parameters, p.parseExpression(Lowest))
+		p.nextToken()
+		if p.currToken.Type == Comma {
+			p.nextToken()
+		}
+	}
+	if !p.expectNext(Lbrace) {
+		return nil
+	}
+	fn.Body = p.parseBlockStatement()
+	return fn
 }

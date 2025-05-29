@@ -165,3 +165,23 @@ func (b *BlockStatement) String() string {
 	}
 	return sb.String()
 }
+
+type FuncLiteral struct {
+	Token
+	Parameters []Expression
+	Body       *BlockStatement
+}
+
+func (f *FuncLiteral) expressionNode()      {}
+func (f *FuncLiteral) TokenLiteral() string { return f.Literal }
+func (f *FuncLiteral) String() string {
+	var sb strings.Builder
+	params := make([]string, len(f.Parameters))
+	for i, p := range f.Parameters {
+		params[i] = p.String()
+	}
+	sb.WriteString(f.Literal)
+	sb.WriteString(fmt.Sprintf("(%s)", strings.Join(params, ",")))
+	sb.WriteString(f.Body.String())
+	return sb.String()
+}
