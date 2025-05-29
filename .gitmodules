@@ -16,3 +16,7 @@
 [submodule "Go/smapping"]
 	path = Go/smapping
 	url = https://github.com/mashingan/smapping
+[submodule "Go/localredis"]
+	path = Go/localredis
+	url = https://github.com/mashingan/localredis
+	branch = master
