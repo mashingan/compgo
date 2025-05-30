@@ -6,35 +6,29 @@ import (
 )
 
 func TestLetStatement(t *testing.T) {
-	input := `
-	let x一 = 5;
-	let y二 = 10;
-	let foobar = 838383;
-	`
-	// 	input := `
-	// let x一 5;
-	// let = 10;
-	// let 838383;
-	// `
-	l := NewLexer(input)
-	p := NewParser(l)
-	program := p.ParseProgram()
-	if program == nil {
-		t.Fatal("ParseProgram return nil")
-	}
-	checkParserErrors(t, p)
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got %d",
-			len(program.Statements))
-	}
 	tests := []struct {
-		expectedIdentifier string
+		input, expectedIdentifier string
+		expectedValue             any
 	}{
-		{"x一"}, {"y二"}, {"foobar"},
+		{"let x一 = 5;", "x一", 5},
+		{"let y二 = 10;", "y二", 10},
+		{"let foobar=838383;", "foobar", 838383},
+		{"let 剣士 =　前衛;", "剣士", "前衛"},
+		{"let 魔法使い = true;", "魔法使い", true},
 	}
-	for i, tt := range tests {
-		stmt := program.Statements[i]
+	for _, tt := range tests {
+		l := NewLexer(tt.input)
+		p := NewParser(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain 1 statements. got %d",
+				len(program.Statements))
+		}
+		stmt := program.Statements[0]
 		testLetStatement(t, stmt, tt.expectedIdentifier)
+		val := stmt.(*LetStatement).Value
+		testLiteralExpression(t, val, tt.expectedValue)
 	}
 }
 

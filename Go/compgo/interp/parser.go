@@ -124,6 +124,8 @@ func (p *Parser) parseLetStatement() *LetStatement {
 	if !p.expectNext(Assign) {
 		return nil
 	}
+	p.nextToken()
+	stmt.Value = p.parseExpression(Lowest)
 	for p.currToken.Type != Semicolon {
 		p.nextToken()
 	}
@@ -133,6 +135,7 @@ func (p *Parser) parseLetStatement() *LetStatement {
 func (p *Parser) parseReturnStatement() *ReturnStatement {
 	stmt := &ReturnStatement{Token: p.currToken}
 	p.nextToken()
+	stmt.Value = p.parseExpression(Lowest)
 	for p.currToken.Type != Semicolon {
 		p.nextToken()
 	}
