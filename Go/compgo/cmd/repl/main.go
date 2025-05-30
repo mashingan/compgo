@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"compgo/interp"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/user"
@@ -27,9 +28,18 @@ func main() {
 			return
 		}
 		line := scanner.Text()
-		l := interp.NewLexer(line)
-		for tok := l.NextToken(); tok.Type != interp.Eof; tok = l.NextToken() {
-			fmt.Printf("%#v\n", tok)
+		p := interp.NewParser(interp.NewLexer(line))
+		prg := p.ParseProgram()
+		if len(p.Errors()) != 0 {
+			printParserErrors(os.Stdout, p.Errors())
+			continue
 		}
+		fmt.Println(prg.String())
+	}
+}
+
+func printParserErrors(o io.Writer, errs []string) {
+	for _, e := range errs {
+		io.WriteString(o, "\t"+e+"\n")
 	}
 }

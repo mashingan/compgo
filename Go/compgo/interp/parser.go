@@ -126,7 +126,7 @@ func (p *Parser) parseLetStatement() *LetStatement {
 	}
 	p.nextToken()
 	stmt.Value = p.parseExpression(Lowest)
-	for p.currToken.Type != Semicolon {
+	if p.peekToken.Type == Semicolon {
 		p.nextToken()
 	}
 	return stmt
@@ -136,7 +136,7 @@ func (p *Parser) parseReturnStatement() *ReturnStatement {
 	stmt := &ReturnStatement{Token: p.currToken}
 	p.nextToken()
 	stmt.Value = p.parseExpression(Lowest)
-	for p.currToken.Type != Semicolon {
+	if p.peekToken.Type == Semicolon {
 		p.nextToken()
 	}
 	return stmt
