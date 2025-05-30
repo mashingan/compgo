@@ -43,7 +43,6 @@ var mapTokenLexer = map[string]TokenType{
 	">=":     Gte,
 	"<=":     Lte,
 	"==":     Eq,
-	"Fn":     Function,
 }
 
 func (l *Lexer) skipWhitespaces() {

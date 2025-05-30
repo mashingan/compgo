@@ -168,7 +168,7 @@ func (b *BlockStatement) String() string {
 
 type FuncLiteral struct {
 	Token
-	Parameters []Expression
+	Parameters []*Identifier
 	Body       *BlockStatement
 }
 
@@ -184,4 +184,20 @@ func (f *FuncLiteral) String() string {
 	sb.WriteString(fmt.Sprintf("(%s)", strings.Join(params, ",")))
 	sb.WriteString(f.Body.String())
 	return sb.String()
+}
+
+type CallExpression struct {
+	Token
+	Func Expression
+	Args []Expression
+}
+
+func (c *CallExpression) expressionNode()      {}
+func (c *CallExpression) TokenLiteral() string { return c.Literal }
+func (c *CallExpression) String() string {
+	params := make([]string, len(c.Args))
+	for i, p := range c.Args {
+		params[i] = p.String()
+	}
+	return fmt.Sprintf("%s(%s)", c.Func.String(), strings.Join(params, ","))
 }

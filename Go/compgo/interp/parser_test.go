@@ -288,6 +288,11 @@ func TestOperatorPrecedence(t *testing.T) {
 		{"2 / (5 + 5)", "(2/(5+5))"},
 		{"-(5 + 5)", "(-(5+5))"},
 		{"!(true == true)", "(!(true==true))"},
+		{"a + add(b * c) + d", "((a+add((b*c)))+d)"},
+		{"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a,b,1,(2*3),(4+5),add(6,(7*8)))"},
+		{"add(a + b + c * d / f + g)",
+			"add((((a+b)+((c*d)/f))+g))"},
 	}
 	for _, tt := range tests {
 		p := NewParser(NewLexer(tt.input))
@@ -445,4 +450,55 @@ func TestFuncLiteral(t *testing.T) {
 	}
 	testInfixExpression(t, body.Expression, "x", "+", "y")
 
+}
+
+func TestFuncParamParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{"fn(){};", []string{}},
+		{"fn(x){};", []string{"x"}},
+		{"fn(x,   y, z){};", []string{"x", "y", "z"}},
+	}
+	for _, tt := range tests {
+		p := NewParser(NewLexer(tt.input))
+		prog := p.ParseProgram()
+		checkParserErrors(t, p)
+		fn := prog.Statements[0].(*ExpressionStatement).
+			Expression.(*FuncLiteral)
+		if len(fn.Parameters) != len(tt.expected) {
+			t.Errorf("length param expected %d. got=%d",
+				len(tt.expected), len(fn.Parameters))
+		}
+		for i, id := range tt.expected {
+			testLiteralExpression(t, fn.Parameters[i], id)
+		}
+	}
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+	input := "add(1, 2 *3, 4+5)"
+	p := NewParser(NewLexer(input))
+	prog := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(prog.Statements) != 1 {
+		t.Fatalf("prog stmt expected 1. got=%d", len(prog.Statements))
+	}
+	stmt, ok := prog.Statements[0].(*ExpressionStatement)
+	if !ok {
+		t.Fatalf("'%s' is not call expression stmt. got=%T",
+			prog.Statements[0], prog.Statements[0])
+	}
+	exp, ok := stmt.Expression.(*CallExpression)
+	if !ok {
+		t.Fatalf("'%s' is not call expr. got=%T", stmt.Expression, stmt.Expression)
+	}
+	testIdentifier(t, exp.Func, "add")
+	if len(exp.Args) != 3 {
+		t.Fatalf("expr arg expect 3. got=%T", len(exp.Args))
+	}
+	testLiteralExpression(t, exp.Args[0], 1)
+	testInfixExpression(t, exp.Args[1], 2, "*", 3)
+	testInfixExpression(t, exp.Args[2], 4, "+", 5)
 }

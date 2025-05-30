@@ -30,16 +30,17 @@ type Parser struct {
 }
 
 var precedences = map[TokenType]uint8{
-	Eq:    Equals,
-	Neq:   Equals,
-	Lt:    Lessgreater,
-	Gt:    Lessgreater,
-	Lte:   Lessgreater,
-	Gte:   Lessgreater,
-	Plus:  Sum,
-	Minus: Sum,
-	Slash: Product,
-	Star:  Product,
+	Eq:     Equals,
+	Neq:    Equals,
+	Lt:     Lessgreater,
+	Gt:     Lessgreater,
+	Lte:    Lessgreater,
+	Gte:    Lessgreater,
+	Plus:   Sum,
+	Minus:  Sum,
+	Slash:  Product,
+	Star:   Product,
+	Lparen: Call,
 }
 
 func NewParser(l *Lexer) *Parser {
@@ -65,6 +66,7 @@ func NewParser(l *Lexer) *Parser {
 	p.infixs[Neq] = p.parseInfixExpression
 	p.infixs[Gte] = p.parseInfixExpression
 	p.infixs[Lte] = p.parseInfixExpression
+	p.infixs[Lparen] = p.parseCallExpression
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -271,9 +273,10 @@ func (p *Parser) parseFuncLiteral() Expression {
 		return nil
 	}
 	p.nextToken()
-	fn.Parameters = []Expression{}
+	// fn.Parameters = p.parseCallArguments()
 	for p.currToken.Type != Rparen {
-		fn.Parameters = append(fn.Parameters, p.parseExpression(Lowest))
+		fn.Parameters = append(fn.Parameters,
+			&Identifier{p.currToken, p.currToken.Literal})
 		p.nextToken()
 		if p.currToken.Type == Comma {
 			p.nextToken()
@@ -284,4 +287,24 @@ func (p *Parser) parseFuncLiteral() Expression {
 	}
 	fn.Body = p.parseBlockStatement()
 	return fn
+}
+
+func (p *Parser) parseCallArguments() []Expression {
+	args := []Expression{}
+	p.nextToken()
+	for p.currToken.Type != Rparen {
+		args = append(args, p.parseExpression(Lowest))
+		p.nextToken()
+		if p.currToken.Type == Comma {
+			p.nextToken()
+		}
+
+	}
+	return args
+}
+
+func (p *Parser) parseCallExpression(fn Expression) Expression {
+	ce := &CallExpression{Token: p.currToken, Func: fn}
+	ce.Args = p.parseCallArguments()
+	return ce
 }
