@@ -223,7 +223,7 @@ func (p *Parser) parseInfixExpression(left Expression) Expression {
 }
 
 func (p *Parser) parseBoolean() Expression {
-	return &Boolean{p.currToken, p.currToken.Type == True}
+	return &BooleanLiteral{p.currToken, p.currToken.Type == True}
 }
 
 func (p *Parser) parseGroupExpression() Expression {

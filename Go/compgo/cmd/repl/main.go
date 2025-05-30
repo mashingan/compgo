@@ -34,7 +34,10 @@ func main() {
 			printParserErrors(os.Stdout, p.Errors())
 			continue
 		}
-		fmt.Println(prg.String())
+		evl := interp.Eval(prg)
+		if evl != nil {
+			fmt.Println(evl.Inspect())
+		}
 	}
 }
 

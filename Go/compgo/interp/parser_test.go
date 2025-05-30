@@ -323,7 +323,7 @@ func TestBooleanExpression(t *testing.T) {
 }
 
 func testBooleanExpression(t *testing.T, stmt Expression, v bool) bool {
-	b, ok := stmt.(*Boolean)
+	b, ok := stmt.(*BooleanLiteral)
 	if !ok {
 		t.Fatalf("expression is not num literal. got=%T", stmt)
 		return false

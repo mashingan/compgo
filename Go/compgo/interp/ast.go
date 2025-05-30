@@ -126,14 +126,14 @@ func (p *InfixExpression) String() string {
 	return fmt.Sprintf("(%s%s%s)", p.Left.String(), p.Operator, p.Right.String())
 }
 
-type Boolean struct {
+type BooleanLiteral struct {
 	Token
 	Value bool
 }
 
-func (b *Boolean) expressionNode()      {}
-func (b *Boolean) TokenLiteral() string { return b.Literal }
-func (b *Boolean) String() string       { return b.Literal }
+func (b *BooleanLiteral) expressionNode()      {}
+func (b *BooleanLiteral) TokenLiteral() string { return b.Literal }
+func (b *BooleanLiteral) String() string       { return b.Literal }
 
 type IfExpression struct {
 	Token
