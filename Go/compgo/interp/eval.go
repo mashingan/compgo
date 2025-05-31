@@ -52,6 +52,14 @@ func Eval(node Node, env Environment) Object {
 			return val
 		}
 		return &ReturnValue{Primitive[Object]{val}}
+	case *LetStatement:
+		val := Eval(n.Value, env)
+		if _, yes := val.(*Error); yes {
+			return val
+		}
+		env.Set(n.Name.Value, val)
+	case *Identifier:
+		return evalIdentifier(n, env)
 	}
 	return nil
 }
@@ -212,4 +220,12 @@ func evalIfElse(ie *IfExpression, env Environment) Object {
 		return Eval(ie.Else, env)
 	}
 	return NullObject
+}
+
+func evalIdentifier(o *Identifier, env Environment) Object {
+	val, ok := env.Get(o.Value)
+	if !ok {
+		return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
+	}
+	return val
 }

@@ -178,6 +178,7 @@ if (10 > 1) {
 		}
 		return 1;
 }`, "unknown operator: BOOLEAN + BOOLEAN"},
+		{"神業", "identifier not found: 神業"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
@@ -198,4 +199,20 @@ func testErrorCheck(t *testing.T, o Object, expected string) bool {
 		return false
 	}
 	return true
+}
+
+func TestLetStatementEval(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"let 主人公 = 5; 主人公;", 5},
+		{"let 主人公 = 5 * 5; 主人公;", 25},
+		{"let 主人公 = 5; let 友人 = 主人公; 友人;", 5},
+		{"let 主人公 = 5; let 友人 = 主人公; let 神的 = 主人公 + 友人 + 5; 神的;", 15},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		testIntegerObject(t, evl, tt.expected)
+	}
 }
