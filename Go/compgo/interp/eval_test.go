@@ -162,3 +162,40 @@ if (10 > 1) {
 		testIntegerObject(t, evl, tt.expected)
 	}
 }
+
+func TestErrorHandling(t *testing.T) {
+	tests := []struct{ input, expected string }{
+		{"5 + true", "unknown operator: INTEGER + BOOLEAN"},
+		{"5 + true; 5;", "unknown operator: INTEGER + BOOLEAN"},
+		{"-true;", "unknown operator: -BOOLEAN"},
+		{"true + false;", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		{`
+if (10 > 1) {
+		if (10 > 1) {
+			return true + false;
+		}
+		return 1;
+}`, "unknown operator: BOOLEAN + BOOLEAN"},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		testErrorCheck(t, evl, tt.expected)
+	}
+}
+
+func testErrorCheck(t *testing.T, o Object, expected string) bool {
+	err, ok := o.(*Error)
+	if !ok {
+		t.Errorf("not error object returned. got=%T (%+v)",
+			o, o)
+		return false
+	}
+	if err.Msg != expected {
+		t.Errorf("wrong error message. expected=%q, got=%q",
+			expected, err.Msg)
+		return false
+	}
+	return true
+}

@@ -1,9 +1,16 @@
 package interp
 
+import "fmt"
+
 var (
 	TrueObject  = &Boolean{Primitive[bool]{true}}
 	FalseObject = &Boolean{Primitive[bool]{false}}
 	NullObject  = &Null{}
+)
+
+const (
+	unknownOperatorPrefixFmt = "unknown operator: %s%s"
+	unknownOperatorInfixFmt  = "unknown operator: %s %s %s"
 )
 
 func Eval(node Node) Object {
@@ -21,17 +28,30 @@ func Eval(node Node) Object {
 		return FalseObject
 	case *PrefixExpression:
 		right := Eval(n.Right)
+		if _, yes := right.(*Error); yes {
+			return right
+		}
 		return evalPrefix(n.Operator, right)
 	case *InfixExpression:
 		left := Eval(n.Left)
+		if _, yes := left.(*Error); yes {
+			return left
+		}
 		right := Eval(n.Right)
+		if _, yes := right.(*Error); yes {
+			return right
+		}
 		return evalInfix(n.Operator, left, right)
 	case *BlockStatement:
 		return evalBlockStatements(n.Statements)
 	case *IfExpression:
 		return evalIfElse(n)
 	case *ReturnStatement:
-		return &ReturnValue{Primitive[Object]{Eval(n.Value)}}
+		val := Eval(n.Value)
+		if _, yes := val.(*Error); yes {
+			return val
+		}
+		return &ReturnValue{Primitive[Object]{val}}
 	}
 	return nil
 }
@@ -40,8 +60,11 @@ func evalProgram(stmt []Statement) Object {
 	var o Object
 	for _, s := range stmt {
 		o = Eval(s)
-		if r, ok := o.(*ReturnValue); ok {
+		switch r := o.(type) {
+		case *ReturnValue:
 			return r.Value
+		case *Error:
+			return r
 		}
 	}
 	return o
@@ -51,8 +74,11 @@ func evalBlockStatements(stmt []Statement) Object {
 	var o Object
 	for _, s := range stmt {
 		o = Eval(s)
-		if o != nil && o.Type() == RetType {
-			return o
+		if o != nil {
+			rt := o.Type()
+			if rt == RetType || rt == ErrorType {
+				return o
+			}
 		}
 	}
 	return o
@@ -74,12 +100,12 @@ func evalPrefix(op string, o Object) Object {
 	case "-":
 		i, ok := o.(*Integer)
 		if !ok {
-			return NullObject
+			return &Error{fmt.Sprintf(unknownOperatorPrefixFmt, op, o.Type())}
 		}
 		i.Value *= -1
 		return i
 	default:
-		return NullObject
+		return &Error{fmt.Sprintf(unknownOperatorPrefixFmt, op, o.Type())}
 	}
 }
 
@@ -98,7 +124,8 @@ func evalInfixMath(op string, left, right *Integer) Object {
 		left.Value /= right.Value
 		return left
 	default:
-		return NullObject
+		return &Error{fmt.Sprintf(unknownOperatorInfixFmt,
+			left.Type(), op, right.Type())}
 	}
 }
 
@@ -108,7 +135,8 @@ func evalInfix(op string, left, right Object) Object {
 	switch op {
 	case "+", "-", "*", "/":
 		if !lok || !rok {
-			return NullObject
+			return &Error{fmt.Sprintf(unknownOperatorInfixFmt,
+				left.Type(), op, right.Type())}
 		}
 		return evalInfixMath(op, lint, rint)
 	case "<=", ">=", ">", "<":
@@ -135,7 +163,7 @@ func evalInfix(op string, left, right Object) Object {
 		}
 		return FalseObject
 	default:
-		return NullObject
+		return &Error{fmt.Sprintf(unknownOperatorInfixFmt, left.Type(), op, right.Type())}
 	}
 }
 
@@ -175,6 +203,9 @@ func toNativeBoolean(o Object) bool {
 
 func evalIfElse(ie *IfExpression) Object {
 	cond := Eval(ie.Condition)
+	if _, yes := cond.(*Error); yes {
+		return cond
+	}
 	if toNativeBoolean(cond) {
 		return Eval(ie.Then)
 	} else if ie.Else != nil {
