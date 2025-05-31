@@ -1,5 +1,11 @@
 package interp
 
+var (
+	TrueObject  = &Boolean{Primitive[bool]{true}}
+	FalseObject = &Boolean{Primitive[bool]{true}}
+	NullObject  = &Null{}
+)
+
 func Eval(node Node) Object {
 	switch n := node.(type) {
 	case *Program:
@@ -9,7 +15,10 @@ func Eval(node Node) Object {
 	case *IntLiteral:
 		return &Integer{Primitive[int]{n.Value}}
 	case *BooleanLiteral:
-		return &Boolean{Primitive[bool]{n.Value}}
+		if n.Value {
+			return TrueObject
+		}
+		return FalseObject
 	}
 	return nil
 }
