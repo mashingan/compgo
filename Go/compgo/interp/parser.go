@@ -54,7 +54,7 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[False] = p.parseBoolean
 	p.prefixs[Lparen] = p.parseGroupExpression
 	p.prefixs[If] = p.parseIfExpression
-	p.prefixs[Function] = p.parseFuncLiteral
+	p.prefixs[Fn] = p.parseFuncLiteral
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression

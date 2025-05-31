@@ -59,7 +59,7 @@ let result = add特異点(five, ten);
 		{Let, "let"},
 		{Ident, "add特異点"},
 		{Assign, "="},
-		{Function, "fn"},
+		{Fn, "fn"},
 		{Lparen, "("},
 		{Ident, "x"},
 		{Comma, ","},

@@ -27,7 +27,7 @@ var mapTokenLexer = map[string]TokenType{
 	",":      Comma,
 	";":      Semicolon,
 	"let":    Let,
-	"fn":     Function,
+	"fn":     Fn,
 	"!":      Bang,
 	"*":      Star,
 	"/":      Slash,

@@ -24,7 +24,7 @@ const (
 	Rparen
 	Lbrace
 	Rbrace
-	Function
+	Fn
 	Let
 	Lt
 	Gt
@@ -54,7 +54,7 @@ var mapTokenDisplay = map[TokenType]string{
 	Comma:     ",",
 	Semicolon: ";",
 	Let:       "let",
-	Function:  "fn",
+	Fn:        "fn",
 	Bang:      "!",
 	Star:      "*",
 	Slash:     "/",
