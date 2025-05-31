@@ -8,6 +8,8 @@ func Eval(node Node) Object {
 		return Eval(n.Expression)
 	case *IntLiteral:
 		return &Integer{Primitive[int]{n.Value}}
+	case *BooleanLiteral:
+		return &Boolean{Primitive[bool]{n.Value}}
 	}
 	return nil
 }

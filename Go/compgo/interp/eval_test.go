@@ -19,7 +19,7 @@ func TestEvalInteger(t *testing.T) {
 func testEval(input string) Object {
 	p := NewParser(NewLexer(input))
 	prg := p.ParseProgram()
-	return Eval(prg.Statements[0])
+	return Eval(prg)
 }
 
 func testIntegerObject(t *testing.T, o Object, expected int) bool {
@@ -30,6 +30,34 @@ func testIntegerObject(t *testing.T, o Object, expected int) bool {
 	}
 	if r.Value != expected {
 		t.Errorf("object has wrong value. got=%d, want=%d",
+			r.Value, expected)
+		return false
+	}
+	return true
+}
+
+func TestEvalBoolean(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"true", true},
+		{"false", false},
+	}
+	for _, tt := range tests {
+		ev := testEval(tt.input)
+		testBooleanObject(t, ev, tt.expected)
+	}
+}
+
+func testBooleanObject(t *testing.T, o Object, expected bool) bool {
+	r, ok := o.(*Boolean)
+	if !ok {
+		t.Errorf("%s is not boolean. got=%T (%+v)", o.Inspect(), o, o)
+		return false
+	}
+	if r.Value != expected {
+		t.Errorf("object has wrong value. got=%v, want=%v",
 			r.Value, expected)
 		return false
 	}
