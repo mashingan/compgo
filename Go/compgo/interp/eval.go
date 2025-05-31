@@ -13,12 +13,12 @@ const (
 	unknownOperatorInfixFmt  = "unknown operator: %s %s %s"
 )
 
-func Eval(node Node) Object {
+func Eval(node Node, env Environment) Object {
 	switch n := node.(type) {
 	case *Program:
-		return evalProgram(n.Statements)
+		return evalProgram(n.Statements, env)
 	case *ExpressionStatement:
-		return Eval(n.Expression)
+		return Eval(n.Expression, env)
 	case *IntLiteral:
 		return &Integer{Primitive[int]{n.Value}}
 	case *BooleanLiteral:
@@ -27,27 +27,27 @@ func Eval(node Node) Object {
 		}
 		return FalseObject
 	case *PrefixExpression:
-		right := Eval(n.Right)
+		right := Eval(n.Right, env)
 		if _, yes := right.(*Error); yes {
 			return right
 		}
 		return evalPrefix(n.Operator, right)
 	case *InfixExpression:
-		left := Eval(n.Left)
+		left := Eval(n.Left, env)
 		if _, yes := left.(*Error); yes {
 			return left
 		}
-		right := Eval(n.Right)
+		right := Eval(n.Right, env)
 		if _, yes := right.(*Error); yes {
 			return right
 		}
 		return evalInfix(n.Operator, left, right)
 	case *BlockStatement:
-		return evalBlockStatements(n.Statements)
+		return evalBlockStatements(n.Statements, env)
 	case *IfExpression:
-		return evalIfElse(n)
+		return evalIfElse(n, env)
 	case *ReturnStatement:
-		val := Eval(n.Value)
+		val := Eval(n.Value, env)
 		if _, yes := val.(*Error); yes {
 			return val
 		}
@@ -56,10 +56,10 @@ func Eval(node Node) Object {
 	return nil
 }
 
-func evalProgram(stmt []Statement) Object {
+func evalProgram(stmt []Statement, env Environment) Object {
 	var o Object
 	for _, s := range stmt {
-		o = Eval(s)
+		o = Eval(s, env)
 		switch r := o.(type) {
 		case *ReturnValue:
 			return r.Value
@@ -70,10 +70,10 @@ func evalProgram(stmt []Statement) Object {
 	return o
 }
 
-func evalBlockStatements(stmt []Statement) Object {
+func evalBlockStatements(stmt []Statement, env Environment) Object {
 	var o Object
 	for _, s := range stmt {
-		o = Eval(s)
+		o = Eval(s, env)
 		if o != nil {
 			rt := o.Type()
 			if rt == RetType || rt == ErrorType {
@@ -201,15 +201,15 @@ func toNativeBoolean(o Object) bool {
 	}
 }
 
-func evalIfElse(ie *IfExpression) Object {
-	cond := Eval(ie.Condition)
+func evalIfElse(ie *IfExpression, env Environment) Object {
+	cond := Eval(ie.Condition, env)
 	if _, yes := cond.(*Error); yes {
 		return cond
 	}
 	if toNativeBoolean(cond) {
-		return Eval(ie.Then)
+		return Eval(ie.Then, env)
 	} else if ie.Else != nil {
-		return Eval(ie.Else)
+		return Eval(ie.Else, env)
 	}
 	return NullObject
 }

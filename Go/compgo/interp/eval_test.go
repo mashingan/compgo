@@ -34,7 +34,7 @@ func TestEvalInteger(t *testing.T) {
 func testEval(input string) Object {
 	p := NewParser(NewLexer(input))
 	prg := p.ParseProgram()
-	return Eval(prg)
+	return Eval(prg, NewEnvironment())
 }
 
 func testIntegerObject(t *testing.T, o Object, expected int) bool {

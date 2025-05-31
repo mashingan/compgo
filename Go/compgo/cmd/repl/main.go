@@ -21,6 +21,7 @@ func main() {
 	}
 	fmt.Printf("Welcome %s to REPL!\n\n", user.Username)
 	scanner := bufio.NewScanner(os.Stdin)
+	env := interp.NewEnvironment()
 	for {
 		fmt.Print(Prompt)
 		scn := scanner.Scan()
@@ -34,7 +35,7 @@ func main() {
 			printParserErrors(os.Stdout, p.Errors())
 			continue
 		}
-		evl := interp.Eval(prg)
+		evl := interp.Eval(prg, env)
 		if evl != nil {
 			fmt.Println(evl.Inspect())
 		}
