@@ -2,7 +2,7 @@ package interp
 
 var (
 	TrueObject  = &Boolean{Primitive[bool]{true}}
-	FalseObject = &Boolean{Primitive[bool]{true}}
+	FalseObject = &Boolean{Primitive[bool]{false}}
 	NullObject  = &Null{}
 )
 
@@ -19,6 +19,9 @@ func Eval(node Node) Object {
 			return TrueObject
 		}
 		return FalseObject
+	case *PrefixExpression:
+		right := Eval(n.Right)
+		return evalPrefix(n.Operator, right)
 	}
 	return nil
 }
@@ -29,4 +32,22 @@ func evalStatements(stmt []Statement) Object {
 		o = Eval(s)
 	}
 	return o
+}
+
+func evalPrefix(op string, o Object) Object {
+	switch op {
+	case "!":
+		switch o {
+		case TrueObject:
+			return FalseObject
+		case FalseObject:
+			return TrueObject
+		case NullObject:
+			return TrueObject
+		default:
+			return FalseObject
+		}
+	default:
+		return NullObject
+	}
 }

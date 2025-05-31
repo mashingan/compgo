@@ -57,9 +57,28 @@ func testBooleanObject(t *testing.T, o Object, expected bool) bool {
 		return false
 	}
 	if r.Value != expected {
-		t.Errorf("object has wrong value. got=%v, want=%v",
-			r.Value, expected)
+		t.Errorf("'%s' has wrong value. got=%v, want=%v",
+			o.Inspect(), r.Value, expected)
 		return false
 	}
 	return true
+}
+
+func TestBangOperator(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"!true", false},
+		{"!false", true},
+		{"!5", false},
+		{"!!true", true},
+		{"!!false", false},
+		{"!!5", true},
+	}
+	for _, tt := range tests {
+		t.Log("tt.input:", tt.input)
+		evl := testEval(tt.input)
+		testBooleanObject(t, evl, tt.expected)
+	}
 }
