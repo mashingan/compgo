@@ -47,6 +47,13 @@ func evalPrefix(op string, o Object) Object {
 		default:
 			return FalseObject
 		}
+	case "-":
+		i, ok := o.(*Integer)
+		if !ok {
+			return NullObject
+		}
+		i.Value *= -1
+		return i
 	default:
 		return NullObject
 	}
