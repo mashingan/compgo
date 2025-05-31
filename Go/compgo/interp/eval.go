@@ -22,6 +22,10 @@ func Eval(node Node) Object {
 	case *PrefixExpression:
 		right := Eval(n.Right)
 		return evalPrefix(n.Operator, right)
+	case *InfixExpression:
+		left := Eval(n.Left)
+		right := Eval(n.Right)
+		return evalInfix(n.Operator, left, right)
 	}
 	return nil
 }
@@ -56,5 +60,95 @@ func evalPrefix(op string, o Object) Object {
 		return i
 	default:
 		return NullObject
+	}
+}
+
+func evalInfixMath(op string, left, right *Integer) Object {
+	switch op {
+	case "+":
+		left.Value += right.Value
+		return left
+	case "-":
+		left.Value -= right.Value
+		return left
+	case "*":
+		left.Value *= right.Value
+		return left
+	case "/":
+		left.Value /= right.Value
+		return left
+	default:
+		return NullObject
+	}
+}
+
+func evalInfix(op string, left, right Object) Object {
+	lint, lok := left.(*Integer)
+	rint, rok := right.(*Integer)
+	switch op {
+	case "+", "-", "*", "/":
+		if !lok || !rok {
+			return NullObject
+		}
+		return evalInfixMath(op, lint, rint)
+	case "<=", ">=", ">", "<":
+		if !lok || !rok {
+			return NullObject
+		}
+		return evalCompareInt(op, lint, rint)
+	case "==", "!=":
+		if lok && rok {
+			if op == "==" {
+				if lint.Value == rint.Value {
+					return TrueObject
+				}
+				return FalseObject
+			}
+			if lint.Value != rint.Value {
+				return TrueObject
+			}
+			return FalseObject
+		}
+		b := toNativeBoolean(left) == toNativeBoolean(right)
+		if (op == "==" && b) || (op == "!=" && !b) {
+			return TrueObject
+		}
+		return FalseObject
+	default:
+		return NullObject
+	}
+}
+
+func evalCompareInt(op string, left, right *Integer) Object {
+	compare := func(test bool) Object {
+		if test {
+			return TrueObject
+		}
+		return FalseObject
+	}
+	switch op {
+	case ">":
+		return compare(left.Value > right.Value)
+	case ">=":
+		return compare(left.Value >= right.Value)
+	case "<":
+		return compare(left.Value < right.Value)
+	case "<=":
+		return compare(left.Value <= right.Value)
+	default:
+		return NullObject
+	}
+}
+
+func toNativeBoolean(o Object) bool {
+	switch vo := o.(type) {
+	case *Integer:
+		return vo.Value != 0
+	case *Null:
+		return false
+	case *Boolean:
+		return vo.Value
+	default:
+		return false
 	}
 }
