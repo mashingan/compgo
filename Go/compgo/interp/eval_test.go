@@ -40,7 +40,7 @@ func testEval(input string) Object {
 func testIntegerObject(t *testing.T, o Object, expected int) bool {
 	r, ok := o.(*Integer)
 	if !ok {
-		t.Errorf("%s is not integer. got=%T (%+v)", o.Inspect(), o, o)
+		t.Errorf("obj is not integer. got=%T (%+v)", o, o)
 		return false
 	}
 	if r.Value != expected {
@@ -105,4 +105,37 @@ func TestBangOperator(t *testing.T) {
 		evl := testEval(tt.input)
 		testBooleanObject(t, evl, tt.expected)
 	}
+}
+
+func TestIfElseEval(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{"if (true) { 10 }", 10},
+		{"if (false) { 10 }", nil},
+		{"if (1) { 10 }", 10},
+		{"if (0) { 10 }", nil},
+		{"if (1 < 2) { 10 }", 10},
+		{"if (1 > 2) { 10 }", nil},
+		{"if (1 > 2) { 10 } else { 20 }", 20},
+		{"if (1 < 2) { 10 } else { 20 }", 10},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		i, ok := tt.expected.(int)
+		if ok {
+			testIntegerObject(t, evl, i)
+			continue
+		}
+		testNullObject(t, evl)
+	}
+}
+
+func testNullObject(t *testing.T, o Object) bool {
+	if o != NullObject {
+		t.Errorf("object is not NULL. got=%T (%+v)", o, o)
+		return false
+	}
+	return true
 }

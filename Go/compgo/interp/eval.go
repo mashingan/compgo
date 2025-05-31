@@ -26,6 +26,10 @@ func Eval(node Node) Object {
 		left := Eval(n.Left)
 		right := Eval(n.Right)
 		return evalInfix(n.Operator, left, right)
+	case *BlockStatement:
+		return evalStatements(n.Statements)
+	case *IfExpression:
+		return evalIfElse(n)
 	}
 	return nil
 }
@@ -151,4 +155,14 @@ func toNativeBoolean(o Object) bool {
 	default:
 		return false
 	}
+}
+
+func evalIfElse(ie *IfExpression) Object {
+	cond := Eval(ie.Condition)
+	if toNativeBoolean(cond) {
+		return Eval(ie.Then)
+	} else if ie.Else != nil {
+		return Eval(ie.Else)
+	}
+	return NullObject
 }
