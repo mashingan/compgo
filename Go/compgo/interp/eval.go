@@ -9,7 +9,7 @@ var (
 func Eval(node Node) Object {
 	switch n := node.(type) {
 	case *Program:
-		return evalStatements(n.Statements)
+		return evalProgram(n.Statements)
 	case *ExpressionStatement:
 		return Eval(n.Expression)
 	case *IntLiteral:
@@ -27,17 +27,33 @@ func Eval(node Node) Object {
 		right := Eval(n.Right)
 		return evalInfix(n.Operator, left, right)
 	case *BlockStatement:
-		return evalStatements(n.Statements)
+		return evalBlockStatements(n.Statements)
 	case *IfExpression:
 		return evalIfElse(n)
+	case *ReturnStatement:
+		return &ReturnValue{Primitive[Object]{Eval(n.Value)}}
 	}
 	return nil
 }
 
-func evalStatements(stmt []Statement) Object {
+func evalProgram(stmt []Statement) Object {
 	var o Object
 	for _, s := range stmt {
 		o = Eval(s)
+		if r, ok := o.(*ReturnValue); ok {
+			return r.Value
+		}
+	}
+	return o
+}
+
+func evalBlockStatements(stmt []Statement) Object {
+	var o Object
+	for _, s := range stmt {
+		o = Eval(s)
+		if o != nil && o.Type() == RetType {
+			return o
+		}
 	}
 	return o
 }

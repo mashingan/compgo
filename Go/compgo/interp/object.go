@@ -10,6 +10,7 @@ const (
 	IntegerType = "INTEGER"
 	BooleanType = "BOOLEAN"
 	NullType    = "NULL"
+	RetType     = "RETURN"
 )
 
 type Object interface {
@@ -40,3 +41,9 @@ type Null struct {
 }
 
 func (*Null) Type() ObjectType { return NullType }
+
+type ReturnValue struct {
+	Primitive[Object]
+}
+
+func (*ReturnValue) Type() ObjectType { return RetType }
