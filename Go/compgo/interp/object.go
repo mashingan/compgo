@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type ObjecType string
+type ObjectType string
 
 const (
 	IntegerType = "INTEGER"
@@ -13,7 +13,7 @@ const (
 )
 
 type Object interface {
-	Type() ObjecType
+	Type() ObjectType
 	Inspect() string
 }
 
@@ -27,16 +27,16 @@ type Integer struct {
 	Primitive[int]
 }
 
-func (*Integer) Type() ObjecType { return IntegerType }
+func (*Integer) Type() ObjectType { return IntegerType }
 
 type Boolean struct {
 	Primitive[bool]
 }
 
-func (*Boolean) Type() ObjecType { return BooleanType }
+func (*Boolean) Type() ObjectType { return BooleanType }
 
 type Null struct {
 	Primitive[*struct{}]
 }
 
-func (*Null) Type() ObjecType { return NullType }
+func (*Null) Type() ObjectType { return NullType }
