@@ -216,3 +216,18 @@ func TestLetStatementEval(t *testing.T) {
 		testIntegerObject(t, evl, tt.expected)
 	}
 }
+
+func TestFunctionEval(t *testing.T) {
+	input := "fn(x) { x + 2; };"
+	evl := testEval(input)
+	fn, ok := evl.(*Function)
+	if !ok {
+		t.Fatalf("obj is not function. got=%T (%+v)", evl, evl)
+	}
+	if len(fn.Parameters) != 1 {
+		t.Fatalf("function has wrong parameter. expected 1 got=%d", len(fn.Parameters))
+	}
+	if fn.Parameters[0].String() != "x" {
+		t.Fatalf("parameter is not 'x'. got=%q", fn.Parameters[0])
+	}
+}

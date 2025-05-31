@@ -2,16 +2,18 @@ package interp
 
 import (
 	"fmt"
+	"strings"
 )
 
 type ObjectType string
 
 const (
-	IntegerType = "INTEGER"
-	BooleanType = "BOOLEAN"
-	NullType    = "NULL"
-	RetType     = "RETURN"
-	ErrorType   = "ERROR"
+	IntegerType  = "INTEGER"
+	BooleanType  = "BOOLEAN"
+	NullType     = "NULL"
+	RetType      = "RETURN"
+	ErrorType    = "ERROR"
+	FunctionType = "FUNCTION"
 )
 
 type Object interface {
@@ -55,3 +57,19 @@ type Error struct {
 
 func (*Error) Type() ObjectType  { return ErrorType }
 func (e *Error) Inspect() string { return fmt.Sprintf("ERROR: %s", e.Msg) }
+
+type Function struct {
+	Parameters []*Identifier
+	Body       *BlockStatement
+	Env        Environment
+}
+
+func (*Function) Type() ObjectType { return FunctionType }
+func (f *Function) Inspect() string {
+	prm := make([]string, len(f.Parameters))
+	for i, s := range f.Parameters {
+		prm[i] = s.String()
+	}
+	return fmt.Sprintf("fn (%s) {\n%s\n}", strings.Join(prm, ", "), f.Body)
+
+}
