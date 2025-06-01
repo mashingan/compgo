@@ -182,6 +182,7 @@ if (10 > 1) {
 		return 1;
 }`, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"神業", "identifier not found: 神業"},
+		{`"Hello" - "world"`, "unknown operator: STRING - STRING"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
@@ -271,6 +272,20 @@ let 新型ｍｋ２ = 新型(2);
 func TestStringEval(t *testing.T) {
 	exp := "hello 異世界!"
 	input := fmt.Sprintf(`"%s"`, exp)
+	evl := testEval(input)
+	str, ok := evl.(*String)
+	if !ok {
+		t.Fatalf("obj is not String. got=%T (%+v)", evl, evl)
+	}
+	if str.Value != exp {
+		t.Errorf("String has wrong value. got=%q, want=%q",
+			str.Value, exp)
+	}
+}
+
+func TestStringConcat(t *testing.T) {
+	exp := "hello 異世界!"
+	input := `"hello" + " " + "異世界!"`
 	evl := testEval(input)
 	str, ok := evl.(*String)
 	if !ok {

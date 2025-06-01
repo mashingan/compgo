@@ -159,12 +159,25 @@ func evalInfix(op string, left, right Object) Object {
 	lint, lok := left.(*Integer)
 	rint, rok := right.(*Integer)
 	switch op {
-	case "+", "-", "*", "/":
+	case "-", "*", "/":
 		if !lok || !rok {
 			return &Error{fmt.Sprintf(unknownOperatorInfixFmt,
 				left.Type(), op, right.Type())}
 		}
 		return evalInfixMath(op, lint, rint)
+	case "+":
+		if lok && rok {
+			lint.Value += rint.Value
+			return lint
+		}
+		lstr, lok := left.(*String)
+		rstr, rok := right.(*String)
+		if !lok || !rok {
+			return &Error{fmt.Sprintf(unknownOperatorInfixFmt,
+				left.Type(), op, right.Type())}
+		}
+		lstr.Value += rstr.Value
+		return lstr
 	case "<=", ">=", ">", "<":
 		if !lok || !rok {
 			return NullObject
