@@ -13,7 +13,7 @@ const (
 	unknownOperatorInfixFmt  = "unknown operator: %s %s %s"
 )
 
-func Eval(node Node, env Environment) Object {
+func Eval(node Node, env *Environment) Object {
 	switch n := node.(type) {
 	case *Program:
 		return evalProgram(n.Statements, env)
@@ -68,7 +68,7 @@ func Eval(node Node, env Environment) Object {
 	return nil
 }
 
-func evalProgram(stmt []Statement, env Environment) Object {
+func evalProgram(stmt []Statement, env *Environment) Object {
 	var o Object
 	for _, s := range stmt {
 		o = Eval(s, env)
@@ -82,7 +82,7 @@ func evalProgram(stmt []Statement, env Environment) Object {
 	return o
 }
 
-func evalBlockStatements(stmt []Statement, env Environment) Object {
+func evalBlockStatements(stmt []Statement, env *Environment) Object {
 	var o Object
 	for _, s := range stmt {
 		o = Eval(s, env)
@@ -213,7 +213,7 @@ func toNativeBoolean(o Object) bool {
 	}
 }
 
-func evalIfElse(ie *IfExpression, env Environment) Object {
+func evalIfElse(ie *IfExpression, env *Environment) Object {
 	cond := Eval(ie.Condition, env)
 	if _, yes := cond.(*Error); yes {
 		return cond
@@ -226,7 +226,7 @@ func evalIfElse(ie *IfExpression, env Environment) Object {
 	return NullObject
 }
 
-func evalIdentifier(o *Identifier, env Environment) Object {
+func evalIdentifier(o *Identifier, env *Environment) Object {
 	val, ok := env.Get(o.Value)
 	if !ok {
 		return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
