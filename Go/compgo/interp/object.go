@@ -8,12 +8,13 @@ import (
 type ObjectType string
 
 const (
-	IntegerType  = "INTEGER"
-	BooleanType  = "BOOLEAN"
-	NullType     = "NULL"
-	RetType      = "RETURN"
-	ErrorType    = "ERROR"
-	FunctionType = "FUNCTION"
+	IntegerType    = "INTEGER"
+	BooleanType    = "BOOLEAN"
+	NullType       = "NULL"
+	RetType        = "RETURN"
+	ErrorType      = "ERROR"
+	FunctionType   = "FUNCTION"
+	IdentifierType = "IDENTIFIER"
 )
 
 type Object interface {
@@ -61,7 +62,7 @@ func (e *Error) Inspect() string { return fmt.Sprintf("ERROR: %s", e.Msg) }
 type Function struct {
 	Parameters []*Identifier
 	Body       *BlockStatement
-	Env        Environment
+	Env        *Environment
 }
 
 func (*Function) Type() ObjectType { return FunctionType }
@@ -73,3 +74,9 @@ func (f *Function) Inspect() string {
 	return fmt.Sprintf("fn (%s) {\n%s\n}", strings.Join(prm, ", "), f.Body)
 
 }
+
+type IdentifierObj struct {
+	Primitive[string]
+}
+
+func (*IdentifierObj) Type() ObjectType { return IdentifierType }

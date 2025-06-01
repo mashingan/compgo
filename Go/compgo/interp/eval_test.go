@@ -235,4 +235,32 @@ func TestFunctionEval(t *testing.T) {
 		t.Fatalf("body is not %q. got=%T", expBody, fn.Body.String())
 	}
 }
+
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int
+	}{
+		{"let 自我 = fn(x) { x; }; 自我(5);", 5},
+		{"let 自我 = fn(x) { return x; }; 自我(5);", 5},
+		{"let 二倍 = fn(x) { x * 2; }; 二倍(5);", 10},
+		{"let 誰何 = fn(役者, 女優) { 役者 + 女優; }; 誰何(5, 5);", 10},
+		{`
+let 誰何 = fn(役者, 女優) { 役者 + 女優; };
+誰何(5+5, 誰何(5, 5));`, 20},
+	}
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
+
+func TestClosure(t *testing.T) {
+	input := `
+let 新型 = fn(x) {
+	fn(y) { x + y };
+};
+
+let 新型ｍｋ２ = 新型(2);
+新型ｍｋ２(2);`
+	testIntegerObject(t, testEval(input), 4)
 }

@@ -64,6 +64,18 @@ func Eval(node Node, env *Environment) Object {
 		params := n.Parameters
 		body := n.Body
 		return &Function{Parameters: params, Env: env, Body: body}
+	case *CallExpression:
+		fn := Eval(n.Func, env)
+		if _, yes := fn.(*Error); yes {
+			return fn
+		}
+		args := evalExpression(n.Args, env)
+		if len(args) == 1 {
+			if _, yes := args[0].(*Error); yes {
+				return args[0]
+			}
+		}
+		return evalCall(fn, args)
 	}
 	return nil
 }
@@ -232,4 +244,32 @@ func evalIdentifier(o *Identifier, env *Environment) Object {
 		return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
 	}
 	return val
+}
+
+func evalExpression(exps []Expression, env *Environment) []Object {
+	res := make([]Object, len(exps))
+	for i, e := range exps {
+		evl := Eval(e, env)
+		if _, yes := evl.(*Error); yes {
+			return []Object{evl}
+		}
+		res[i] = evl
+	}
+	return res
+}
+
+func evalCall(fn Object, args []Object) Object {
+	ffn, ok := fn.(*Function)
+	if !ok {
+		return &Error{fmt.Sprintf("not a function: %s", fn.Type())}
+	}
+	envFrame := NewEnvironmentFrame(ffn.Env)
+	for i, a := range ffn.Parameters {
+		envFrame.Set(a.Value, args[i])
+	}
+	evl := Eval(ffn.Body, envFrame)
+	if val, ok := evl.(*ReturnValue); ok {
+		return val.Value
+	}
+	return evl
 }
