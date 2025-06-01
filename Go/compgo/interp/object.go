@@ -17,6 +17,7 @@ const (
 	IdentifierType = "IDENTIFIER"
 	StringType     = "STRING"
 	BuiltinType    = "BUILTIN"
+	SliceType      = "ARRAY"
 )
 
 type Object interface {
@@ -87,7 +88,8 @@ type String struct {
 	Primitive[string]
 }
 
-func (*String) Type() ObjectType { return StringType }
+func (*String) Type() ObjectType  { return StringType }
+func (s *String) Inspect() string { return fmt.Sprintf(`"%s"`, s.Value) }
 
 type BuiltinFunction func(args ...Object) Object
 
@@ -97,3 +99,16 @@ type Builtin struct {
 
 func (*Builtin) Type() ObjectType { return BuiltinType }
 func (*Builtin) Inspect() string  { return "builtin-function" }
+
+type SliceObj struct {
+	Elements []Object
+}
+
+func (*SliceObj) Type() ObjectType { return SliceType }
+func (s *SliceObj) Inspect() string {
+	so := make([]string, len(s.Elements))
+	for i, o := range s.Elements {
+		so[i] = o.Inspect()
+	}
+	return fmt.Sprintf("[%s]", strings.Join(so, ","))
+}
