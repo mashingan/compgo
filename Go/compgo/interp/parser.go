@@ -329,6 +329,5 @@ func (p *Parser) parseSlice() Expression {
 			p.nextToken()
 		}
 	}
-	p.nextToken()
 	return e
 }
