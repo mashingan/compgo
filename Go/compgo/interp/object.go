@@ -15,6 +15,7 @@ const (
 	ErrorType      = "ERROR"
 	FunctionType   = "FUNCTION"
 	IdentifierType = "IDENTIFIER"
+	StringType     = "STRING"
 )
 
 type Object interface {
@@ -80,3 +81,9 @@ type IdentifierObj struct {
 }
 
 func (*IdentifierObj) Type() ObjectType { return IdentifierType }
+
+type String struct {
+	Primitive[string]
+}
+
+func (*String) Type() ObjectType { return StringType }

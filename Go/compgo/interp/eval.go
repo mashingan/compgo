@@ -21,6 +21,8 @@ func Eval(node Node, env *Environment) Object {
 		return Eval(n.Expression, env)
 	case *IntLiteral:
 		return &Integer{Primitive[int]{n.Value}}
+	case *StringLiteral:
+		return &String{Primitive[string]{n.Value}}
 	case *BooleanLiteral:
 		if n.Value {
 			return TrueObject

@@ -201,3 +201,12 @@ func (c *CallExpression) String() string {
 	}
 	return fmt.Sprintf("%s(%s)", c.Func.String(), strings.Join(params, ","))
 }
+
+type StringLiteral struct {
+	Token
+	Value string
+}
+
+func (s *StringLiteral) expressionNode()      {}
+func (s *StringLiteral) TokenLiteral() string { return s.Literal }
+func (s *StringLiteral) String() string       { return s.Literal }

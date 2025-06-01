@@ -1,6 +1,9 @@
 package interp
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestEvalInteger(t *testing.T) {
 	tests := []struct {
@@ -263,4 +266,18 @@ let 新型 = fn(x) {
 let 新型ｍｋ２ = 新型(2);
 新型ｍｋ２(2);`
 	testIntegerObject(t, testEval(input), 4)
+}
+
+func TestStringEval(t *testing.T) {
+	exp := "hello 異世界!"
+	input := fmt.Sprintf(`"%s"`, exp)
+	evl := testEval(input)
+	str, ok := evl.(*String)
+	if !ok {
+		t.Fatalf("obj is not String. got=%T (%+v)", evl, evl)
+	}
+	if str.Value != exp {
+		t.Errorf("String has wrong value. got=%q, want=%q",
+			str.Value, exp)
+	}
 }
