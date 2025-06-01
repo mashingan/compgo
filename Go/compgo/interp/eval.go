@@ -60,6 +60,10 @@ func Eval(node Node, env Environment) Object {
 		env.Set(n.Name.Value, val)
 	case *Identifier:
 		return evalIdentifier(n, env)
+	case *FuncLiteral:
+		params := n.Parameters
+		body := n.Body
+		return &Function{Parameters: params, Env: env, Body: body}
 	}
 	return nil
 }

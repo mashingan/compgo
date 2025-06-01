@@ -230,4 +230,9 @@ func TestFunctionEval(t *testing.T) {
 	if fn.Parameters[0].String() != "x" {
 		t.Fatalf("parameter is not 'x'. got=%q", fn.Parameters[0])
 	}
+	expBody := "(x+2)"
+	if fn.Body.String() != expBody {
+		t.Fatalf("body is not %q. got=%T", expBody, fn.Body.String())
+	}
+}
 }
