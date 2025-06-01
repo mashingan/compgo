@@ -225,3 +225,14 @@ func (s *Slices) String() string {
 	}
 	return fmt.Sprintf("[%s]", strings.Join(res, ","))
 }
+
+type CallIndex struct {
+	Token
+	Left, Index Expression
+}
+
+func (c *CallIndex) expressionNode()      {}
+func (c *CallIndex) TokenLiteral() string { return c.Literal }
+func (c *CallIndex) String() string {
+	return fmt.Sprintf("%s[%s]", c.Left, c.Index)
+}

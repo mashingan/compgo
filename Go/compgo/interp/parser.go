@@ -14,6 +14,7 @@ const (
 	Product
 	Prefix
 	Call
+	Index
 )
 
 type (
@@ -30,17 +31,18 @@ type Parser struct {
 }
 
 var precedences = map[TokenType]uint8{
-	Eq:     Equals,
-	Neq:    Equals,
-	Lt:     Lessgreater,
-	Gt:     Lessgreater,
-	Lte:    Lessgreater,
-	Gte:    Lessgreater,
-	Plus:   Sum,
-	Minus:  Sum,
-	Slash:  Product,
-	Star:   Product,
-	Lparen: Call,
+	Eq:       Equals,
+	Neq:      Equals,
+	Lt:       Lessgreater,
+	Gt:       Lessgreater,
+	Lte:      Lessgreater,
+	Gte:      Lessgreater,
+	Plus:     Sum,
+	Minus:    Sum,
+	Slash:    Product,
+	Star:     Product,
+	Lparen:   Call,
+	Lbracket: Index,
 }
 
 func NewParser(l *Lexer) *Parser {
@@ -69,6 +71,7 @@ func NewParser(l *Lexer) *Parser {
 	p.infixs[Gte] = p.parseInfixExpression
 	p.infixs[Lte] = p.parseInfixExpression
 	p.infixs[Lparen] = p.parseCallExpression
+	p.infixs[Lbracket] = p.parseIndexing
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -321,4 +324,16 @@ func (p *Parser) parseSlice() Expression {
 	e := &Slices{Token: p.currToken}
 	e.Elements = p.parseListUntil(Rbracket)
 	return e
+}
+
+func (p *Parser) parseIndexing(left Expression) Expression {
+	c := &CallIndex{Token: p.currToken, Left: left}
+	p.nextToken()
+	c.Index = p.parseExpression(Lowest)
+	// if !p.expectNext(Rbracket) {
+	// 	p.peekError(Rbracket)
+	// 	return c
+	// }
+	p.nextToken()
+	return c
 }

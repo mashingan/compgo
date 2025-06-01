@@ -287,6 +287,7 @@ func TestOperatorPrecedence(t *testing.T) {
 			"add(a,b,1,(2*3),(4+5),add(6,(7*8)))"},
 		{"add(a + b + c * d / f + g)",
 			"add((((a+b)+((c*d)/f))+g))"},
+		{"a + add(b * c) + d - e [f / g]", "(((a+add((b*c)))+d)-e[(f/g)])"},
 	}
 	for _, tt := range tests {
 		p := NewParser(NewLexer(tt.input))
@@ -538,5 +539,50 @@ func TestSliceLiteral(t *testing.T) {
 	}
 	if len(slc.Elements) != 5 {
 		t.Errorf("expected len 5. got=%q", len(slc.Elements))
+	}
+}
+
+func TestIndexing(t *testing.T) {
+	input := `
+a[1];
+[1, 2, 3, 4][3];
+b[2 * 5];
+call  (  me  )  [okay];
+`
+	tests := []struct{ expinput, expleft, expindex string }{
+		{"a[1]", "a", "1"},
+		{"[1,2,3,4][3]", "[1,2,3,4]", "3"},
+		{"b[(2*5)]", "b", "(2*5)"},
+		{"call(me)[okay]", "call(me)", "okay"},
+	}
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	t.Log("prg:", prg)
+	checkParserErrors(t, p)
+	if len(prg.Statements) != 4 {
+		t.Fatalf("expected 4 statements. got=%d", len(prg.Statements))
+	}
+	for i, tt := range tests {
+		// t.Logf("prg.stmt[%d]: %s", i, prg.Statements[i])
+		expr, ok := prg.Statements[i].(*ExpressionStatement)
+		if !ok {
+			t.Logf("prg.stmt[%d]: %s", i, prg.Statements[i])
+			t.Errorf("not expr statement. got=%T (%+v)", prg.Statements[i], prg.Statements[i])
+			continue
+		}
+		idx, ok := expr.Expression.(*CallIndex)
+		if !ok {
+			t.Errorf("not indexing. got=%T (%+v)", expr, expr)
+			continue
+		}
+		if idx.String() != tt.expinput {
+			t.Errorf("wrong index expr. got=%q want=%q", idx, tt.expinput)
+		}
+		if idx.Left.String() != tt.expleft {
+			t.Errorf("wrong left call. got=%q want=%q", idx.Left, tt.expleft)
+		}
+		if idx.Index.String() != tt.expindex {
+			t.Errorf("wrong index. got=%q want=%q", idx.Index, tt.expindex)
+		}
 	}
 }
