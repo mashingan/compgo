@@ -332,6 +332,7 @@ func TestSlice(t *testing.T) {
 		input    string
 		expected any
 	}{
+		{`len([])`, 0},
 		{`[1, 2, 3, 4 + 5]`, "[1,2,3,9]"},
 		{`len([1, "two", true, "four"])`, 4},
 		{`["hello", "異世界"]`, `["hello","異世界"]`},
