@@ -38,6 +38,8 @@ const (
 	Lte
 	Neq
 	Str
+	Lbracket
+	Rbracket
 )
 
 func (t TokenType) String() string {
@@ -74,4 +76,6 @@ var mapTokenDisplay = map[TokenType]string{
 	Ident:     "Ident",
 	Int:       "Int",
 	Str:       "String",
+	Lbracket:  "[",
+	Rbracket:  "]",
 }
