@@ -78,6 +78,12 @@ func Eval(node Node, env *Environment) Object {
 			}
 		}
 		return evalCall(fn, args)
+	case *Slices:
+		sl := &SliceObj{make([]Object, len(n.Elements))}
+		for i, e := range n.Elements {
+			sl.Elements[i] = Eval(e, env)
+		}
+		return sl
 	}
 	return nil
 }

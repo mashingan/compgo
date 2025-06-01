@@ -210,3 +210,18 @@ type StringLiteral struct {
 func (s *StringLiteral) expressionNode()      {}
 func (s *StringLiteral) TokenLiteral() string { return s.Literal }
 func (s *StringLiteral) String() string       { return s.Literal }
+
+type Slices struct {
+	Token
+	Elements []Expression
+}
+
+func (s *Slices) expressionNode()      {}
+func (s *Slices) TokenLiteral() string { return s.Literal }
+func (s *Slices) String() string {
+	res := make([]string, len(s.Elements))
+	for i, e := range s.Elements {
+		res[i] = e.String()
+	}
+	return fmt.Sprintf("[%s]", strings.Join(res, ","))
+}

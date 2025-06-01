@@ -326,3 +326,32 @@ func TestBuiltin(t *testing.T) {
 		}
 	}
 }
+
+func TestSlice(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{`[1, 2, 3, 4 + 5]`, "[1,2,3,9]"},
+		{`len([1, "two", true, "four"])`, 4},
+		{`["hello", "異世界"]`, `["hello","異世界"]`},
+		{`len(["世界一", "世界二"])`, 2},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		switch exp := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evl, exp)
+		case string:
+			slc, ok := evl.(*SliceObj)
+			if !ok {
+				t.Errorf("object is not Error. got=%T (%+v)", evl, evl)
+				continue
+			}
+			if slc.Inspect() != exp {
+				t.Errorf("wrong slice. expected=%q, got=%q",
+					exp, slc.Inspect())
+			}
+		}
+	}
+}
