@@ -296,3 +296,33 @@ func TestStringConcat(t *testing.T) {
 			str.Value, exp)
 	}
 }
+
+func TestBuiltin(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello 異世界")`, 9},
+		{`len(1)`, "argument to 'len' not supported, got INTEGER"},
+		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		switch exp := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evl, exp)
+		case string:
+			errobj, ok := evl.(*Error)
+			if !ok {
+				t.Errorf("object is not Error. got=%T (%+v)", evl, evl)
+				continue
+			}
+			if errobj.Msg != exp {
+				t.Errorf("wrong error mesage. expected=%q, got=%q",
+					exp, errobj.Msg)
+			}
+		}
+	}
+}

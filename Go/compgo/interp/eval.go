@@ -254,11 +254,13 @@ func evalIfElse(ie *IfExpression, env *Environment) Object {
 }
 
 func evalIdentifier(o *Identifier, env *Environment) Object {
-	val, ok := env.Get(o.Value)
-	if !ok {
-		return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
+	if val, ok := env.Get(o.Value); ok {
+		return val
 	}
-	return val
+	if bltn, ok := builtins[o.Value]; ok {
+		return bltn
+	}
+	return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
 }
 
 func evalExpression(exps []Expression, env *Environment) []Object {
@@ -274,17 +276,19 @@ func evalExpression(exps []Expression, env *Environment) []Object {
 }
 
 func evalCall(fn Object, args []Object) Object {
-	ffn, ok := fn.(*Function)
-	if !ok {
-		return &Error{fmt.Sprintf("not a function: %s", fn.Type())}
+	switch ffn := fn.(type) {
+	case *Function:
+		envFrame := NewEnvironmentFrame(ffn.Env)
+		for i, a := range ffn.Parameters {
+			envFrame.Set(a.Value, args[i])
+		}
+		evl := Eval(ffn.Body, envFrame)
+		if val, ok := evl.(*ReturnValue); ok {
+			return val.Value
+		}
+		return evl
+	case *Builtin:
+		return ffn.Fn(args...)
 	}
-	envFrame := NewEnvironmentFrame(ffn.Env)
-	for i, a := range ffn.Parameters {
-		envFrame.Set(a.Value, args[i])
-	}
-	evl := Eval(ffn.Body, envFrame)
-	if val, ok := evl.(*ReturnValue); ok {
-		return val.Value
-	}
-	return evl
+	return &Error{fmt.Sprintf("not a function: %s", fn.Type())}
 }

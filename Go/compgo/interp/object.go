@@ -16,6 +16,7 @@ const (
 	FunctionType   = "FUNCTION"
 	IdentifierType = "IDENTIFIER"
 	StringType     = "STRING"
+	BuiltinType    = "BUILTIN"
 )
 
 type Object interface {
@@ -87,3 +88,12 @@ type String struct {
 }
 
 func (*String) Type() ObjectType { return StringType }
+
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (*Builtin) Type() ObjectType { return BuiltinType }
+func (*Builtin) Inspect() string  { return "builtin-function" }
