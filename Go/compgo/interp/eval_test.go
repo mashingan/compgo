@@ -365,8 +365,8 @@ func TestIndexEval(t *testing.T) {
 		{`let a = [1, 2, 3, 4]; a[2]`, 3},
 		{`[1, 2, 3, 4 + 5][3]`, 9},
 		{`[][1]`, NullObject},
-		{`["hello", "異世界"][1]`, "異世界"},
-		{`let idx = 1; ["hello", "異世界"][idx]`, "異世界"},
+		{`["hello", "異世界"][2-1]`, "異世界"},
+		{`let idx = 1*1; ["hello", "異世界"][idx]`, "異世界"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
@@ -376,7 +376,7 @@ func TestIndexEval(t *testing.T) {
 		case string:
 			str, ok := evl.(*String)
 			if !ok {
-				t.Errorf("object is not index. got=%T (%+v)", evl, evl)
+				t.Errorf("object is not string. got=%T (%+v)", evl, evl)
 				continue
 			}
 			if str.Value != exp {
