@@ -518,3 +518,25 @@ func TestStringLiteral(t *testing.T) {
 		t.Errorf("expected hello world. got=%q", str.Value)
 	}
 }
+
+func TestSliceLiteral(t *testing.T) {
+	input := `[1, 2, hehehello, "aaa", true];`
+	p := NewParser(NewLexer(input))
+	prog := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(prog.Statements) != 1 {
+		t.Fatalf("prog stmt expected 1. got=%d", len(prog.Statements))
+	}
+	stmt, ok := prog.Statements[0].(*ExpressionStatement)
+	if !ok {
+		t.Fatalf("'%s' is not expression. got=%T",
+			prog.Statements[0], prog.Statements[0])
+	}
+	slc, ok := stmt.Expression.(*Slices)
+	if !ok {
+		t.Fatalf("'%s' is not slice. got=%T", stmt.Expression, stmt.Expression)
+	}
+	if len(slc.Elements) != 5 {
+		t.Errorf("expected len 5. got=%q", len(slc.Elements))
+	}
+}

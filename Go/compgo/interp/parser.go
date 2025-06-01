@@ -56,6 +56,7 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[If] = p.parseIfExpression
 	p.prefixs[Fn] = p.parseFuncLiteral
 	p.prefixs[Str] = p.parseStrLiteral
+	p.prefixs[Lbracket] = p.parseSlice
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression
@@ -315,4 +316,19 @@ func (p *Parser) parseCallExpression(fn Expression) Expression {
 
 func (p *Parser) parseStrLiteral() Expression {
 	return &StringLiteral{p.currToken, p.currToken.Literal}
+}
+
+func (p *Parser) parseSlice() Expression {
+	e := &Slices{Token: p.currToken}
+	e.Elements = []Expression{}
+	p.nextToken()
+	for p.currToken.Type != Rbracket {
+		e.Elements = append(e.Elements, p.parseExpression(Lowest))
+		p.nextToken()
+		if p.currToken.Type == Comma {
+			p.nextToken()
+		}
+	}
+	p.nextToken()
+	return e
 }
