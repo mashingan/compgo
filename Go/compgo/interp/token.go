@@ -37,6 +37,7 @@ const (
 	Gte
 	Lte
 	Neq
+	Str
 )
 
 func (t TokenType) String() string {
@@ -72,4 +73,5 @@ var mapTokenDisplay = map[TokenType]string{
 	Eq:        "==",
 	Ident:     "Ident",
 	Int:       "Int",
+	Str:       "String",
 }

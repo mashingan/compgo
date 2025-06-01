@@ -217,3 +217,36 @@ func TestNextToken_5(t *testing.T) {
 	}
 
 }
+
+func TestNextToken_string(t *testing.T) {
+	input := `
+"foobar"
+"foo bar"
+"hello \"world\""
+"hello \nworld\n"
+"hello \tworld\t"
+`
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{Str, "foobar"},
+		{Str, "foo bar"},
+		{Str, "hello \"world\""},
+		{Str, "hello \nworld\n"},
+		{Str, "hello \tworld\t"},
+		{Eof, ""},
+	}
+	l := NewLexer(input)
+	for i, tt := range tests {
+		tok := l.NextToken()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - token type wrong. expected=%q, got %q",
+				i, tt.expectedType, tok.Type)
+		}
+		if tok.Literal != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - token literal wrong. expected=%q, got %q",
+				i, tt.expectedLiteral, tok.Literal)
+		}
+	}
+}

@@ -43,6 +43,7 @@ var mapTokenLexer = map[string]TokenType{
 	">=":     Gte,
 	"<=":     Lte,
 	"==":     Eq,
+	"\"":     Str,
 }
 
 func (l *Lexer) skipWhitespaces() {
@@ -94,13 +95,7 @@ func (l *Lexer) tokenize(r rune) Token {
 
 func (l *Lexer) getCombined(t TokenType, r rune) Token {
 	switch string(r) {
-	case "=":
-		fallthrough
-	case "<":
-		fallthrough
-	case ">":
-		fallthrough
-	case "!":
+	case "=", "<", ">", "!":
 		rr := utf8.AppendRune(nil, r)
 		r, size := utf8.DecodeRune(l.inputUtf8)
 		rr = utf8.AppendRune(rr, r)
@@ -110,6 +105,8 @@ func (l *Lexer) getCombined(t TokenType, r rune) Token {
 			l.inputUtf8 = l.inputUtf8[size:]
 			return Token{tt, string(rr)}
 		}
+	case "\"":
+		return l.readString()
 	}
 	return Token{t, string(r)}
 }
@@ -135,4 +132,53 @@ func (l *Lexer) NextToken() Token {
 		return Token{Eof, ""}
 	}
 	return l.getToken()
+}
+
+func (l *Lexer) readString() Token {
+	rr := []byte{}
+	escaped := false
+	for {
+		r, size := utf8.DecodeRune(l.inputUtf8)
+		l.inputUtf8 = l.inputUtf8[size:]
+		rs := string(r)
+		if rs == "\"" && !escaped {
+			break
+		}
+		if rs == "\\" && !escaped {
+			escaped = true
+			continue
+		}
+		if escaped {
+			rr = appendEscape(rr, rs)
+			escaped = false
+			continue
+		}
+		rr = utf8.AppendRune(rr, r)
+		l.position++
+	}
+	r, sz := utf8.DecodeRune(l.inputUtf8)
+	if string(r) == "\"" {
+		l.inputUtf8 = l.inputUtf8[sz:]
+	}
+	return Token{Str, string(rr)}
+}
+
+func appendEscape(rr []byte, rs string) []byte {
+	switch rs {
+	case "n":
+		rr = append(rr, '\n')
+	case "r":
+		rr = append(rr, '\r')
+	case "a":
+		rr = append(rr, '\a')
+	case "t":
+		rr = append(rr, '\t')
+	case "b":
+		rr = append(rr, '\b')
+	case "\\":
+		rr = append(rr, '\\')
+	case "\"":
+		rr = append(rr, '"')
+	}
+	return rr
 }

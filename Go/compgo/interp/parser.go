@@ -55,6 +55,7 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[Lparen] = p.parseGroupExpression
 	p.prefixs[If] = p.parseIfExpression
 	p.prefixs[Fn] = p.parseFuncLiteral
+	p.prefixs[Str] = p.parseStrLiteral
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression
@@ -310,4 +311,8 @@ func (p *Parser) parseCallExpression(fn Expression) Expression {
 	ce := &CallExpression{Token: p.currToken, Func: fn}
 	ce.Args = p.parseCallArguments()
 	return ce
+}
+
+func (p *Parser) parseStrLiteral() Expression {
+	return &StringLiteral{p.currToken, p.currToken.Literal}
 }
