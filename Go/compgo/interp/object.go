@@ -18,6 +18,7 @@ const (
 	StringType     = "STRING"
 	BuiltinType    = "BUILTIN"
 	SliceType      = "ARRAY"
+	IndexType      = "INDEX"
 )
 
 type Object interface {
@@ -111,4 +112,13 @@ func (s *SliceObj) Inspect() string {
 		so[i] = o.Inspect()
 	}
 	return fmt.Sprintf("[%s]", strings.Join(so, ","))
+}
+
+type IndexObj struct {
+	Left, Index Object
+}
+
+func (*IndexObj) Type() ObjectType { return SliceType }
+func (s *IndexObj) Inspect() string {
+	return fmt.Sprintf("%s[%s]", s.Left.Inspect(), s.Index.Inspect())
 }

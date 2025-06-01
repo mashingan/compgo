@@ -84,6 +84,8 @@ func Eval(node Node, env *Environment) Object {
 			sl.Elements[i] = Eval(e, env)
 		}
 		return sl
+	case *CallIndex:
+		return evalSliceIndex(n, env)
 	}
 	return nil
 }
@@ -297,4 +299,29 @@ func evalCall(fn Object, args []Object) Object {
 		return ffn.Fn(args...)
 	}
 	return &Error{fmt.Sprintf("not a function: %s", fn.Type())}
+}
+
+func evalSliceIndex(n *CallIndex, env *Environment) Object {
+	left := Eval(n.Left, env)
+	if _, yes := left.(*Error); yes {
+		return left
+	}
+	idx := Eval(n.Index, env)
+	if _, yes := idx.(*Error); yes {
+		return idx
+	}
+	slc, ok := left.(*SliceObj)
+	if !ok {
+		return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
+			SliceType, left, left)}
+	}
+	i, ok := idx.(*Integer)
+	if !ok {
+		return &Error{fmt.Sprintf("wrong index, expected %s got=%T (%+v)",
+			IntegerType, idx, idx)}
+	}
+	if i.Value >= len(slc.Elements) || i.Value < 0 {
+		return NullObject
+	}
+	return slc.Elements[i.Value]
 }

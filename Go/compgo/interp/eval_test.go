@@ -356,3 +356,38 @@ func TestSlice(t *testing.T) {
 		}
 	}
 }
+
+func TestIndexEval(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{`let a = [1, 2, 3, 4]; a[2]`, 3},
+		{`[1, 2, 3, 4 + 5][3]`, 9},
+		{`[][1]`, NullObject},
+		{`["hello", "異世界"][1]`, "異世界"},
+		{`let idx = 1; ["hello", "異世界"][idx]`, "異世界"},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		switch exp := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evl, exp)
+		case string:
+			str, ok := evl.(*String)
+			if !ok {
+				t.Errorf("object is not index. got=%T (%+v)", evl, evl)
+				continue
+			}
+			if str.Value != exp {
+				t.Errorf("wrong string. expected=%q, got=%q",
+					exp, str.Value)
+			}
+		case *Null:
+			if evl != NullObject {
+				t.Errorf("wrong null. expected=%p (%+v), got=%p (%+v)",
+					NullObject, NullObject, evl, evl)
+			}
+		}
+	}
+}
