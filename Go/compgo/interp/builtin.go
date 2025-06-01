@@ -14,6 +14,8 @@ var builtins = map[string]*Builtin{
 			switch arg := args[0].(type) {
 			case *String:
 				return &Integer{Primitive[int]{utf8.RuneCountInString(arg.Value)}}
+			case *SliceObj:
+				return &Integer{Primitive[int]{len(arg.Elements)}}
 			default:
 				return &Error{fmt.Sprintf("argument to 'len' not supported, got %s",
 					args[0].Type())}
