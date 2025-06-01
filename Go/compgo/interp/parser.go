@@ -294,23 +294,22 @@ func (p *Parser) parseFuncLiteral() Expression {
 	return fn
 }
 
-func (p *Parser) parseCallArguments() []Expression {
-	args := []Expression{}
+func (p *Parser) parseListUntil(tokenType TokenType) []Expression {
+	lst := []Expression{}
 	p.nextToken()
-	for p.currToken.Type != Rparen {
-		args = append(args, p.parseExpression(Lowest))
+	for p.currToken.Type != tokenType {
+		lst = append(lst, p.parseExpression(Lowest))
 		p.nextToken()
 		if p.currToken.Type == Comma {
 			p.nextToken()
 		}
-
 	}
-	return args
+	return lst
 }
 
 func (p *Parser) parseCallExpression(fn Expression) Expression {
 	ce := &CallExpression{Token: p.currToken, Func: fn}
-	ce.Args = p.parseCallArguments()
+	ce.Args = p.parseListUntil(Rparen)
 	return ce
 }
 
@@ -320,14 +319,6 @@ func (p *Parser) parseStrLiteral() Expression {
 
 func (p *Parser) parseSlice() Expression {
 	e := &Slices{Token: p.currToken}
-	e.Elements = []Expression{}
-	p.nextToken()
-	for p.currToken.Type != Rbracket {
-		e.Elements = append(e.Elements, p.parseExpression(Lowest))
-		p.nextToken()
-		if p.currToken.Type == Comma {
-			p.nextToken()
-		}
-	}
+	e.Elements = p.parseListUntil(Rbracket)
 	return e
 }
