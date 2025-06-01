@@ -384,10 +384,7 @@ func TestIndexEval(t *testing.T) {
 					exp, str.Value)
 			}
 		case *Null:
-			if evl != NullObject {
-				t.Errorf("wrong null. expected=%p (%+v), got=%p (%+v)",
-					NullObject, NullObject, evl, evl)
-			}
+			testNullObject(t, evl)
 		}
 	}
 }
