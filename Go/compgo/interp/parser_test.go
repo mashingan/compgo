@@ -615,3 +615,57 @@ func TestHashParsing(t *testing.T) {
 		testIntLiteral(t, v, expv)
 	}
 }
+
+func TestHashEmptyParsing(t *testing.T) {
+	input := `{}`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	checkParserErrors(t, p)
+	stmt := prg.Statements[0].(*ExpressionStatement)
+	hash, ok := stmt.Expression.(*HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not HashLiteral. got=%T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 0 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+}
+
+func TestHashExpressionKeyParsing(t *testing.T) {
+	input := `let a = "two"; {"one": 0+1, a: 10-8, true: 15/5}`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(prg.Statements) < 2 {
+		t.Fatalf("statement less than 2. got=%d", len(prg.Statements))
+	}
+	stmt := prg.Statements[1].(*ExpressionStatement)
+	hash, ok := stmt.Expression.(*HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not HashLiteral. got=%T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+	exp := map[string]struct {
+		l  int
+		op string
+		r  int
+	}{
+		"one":  {0, "+", 1},
+		"a":    {10, "-", 8},
+		"true": {15, "/", 5},
+	}
+	for k := range exp {
+		t.Log("k:", k)
+	}
+	for k, v := range hash.Pairs {
+		t.Logf("%s:%s", k.String(), v)
+		vv, exists := exp[k.String()]
+		if !exists {
+			t.Errorf("expected key '%q' exist. got otherwise", k.String())
+			continue
+		}
+		testInfixExpression(t, v, vv.l, vv.op, vv.r)
+	}
+}
