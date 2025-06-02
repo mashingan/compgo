@@ -43,7 +43,6 @@ var precedences = map[TokenType]uint8{
 	Star:     Product,
 	Lparen:   Call,
 	Lbracket: Index,
-	Colon:    Index,
 }
 
 func NewParser(l *Lexer) *Parser {
@@ -74,7 +73,6 @@ func NewParser(l *Lexer) *Parser {
 	p.infixs[Lte] = p.parseInfixExpression
 	p.infixs[Lparen] = p.parseCallExpression
 	p.infixs[Lbracket] = p.parseIndexing
-	p.infixs[Colon] = p.parseInfixExpression
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -341,25 +339,22 @@ func (p *Parser) parseHashMap() Expression {
 	h := &HashLiteral{p.currToken, make(map[Expression]Expression)}
 	p.nextToken()
 	for p.currToken.Type != Rbrace {
-		pair := p.parseExpression(Lowest)
+		left := p.parseExpression(Lowest)
+		if !p.expectNext(Colon) {
+			p.peekError(Colon)
+			return nil
+		}
 		p.nextToken()
-		if p.currToken.Type == Comma {
+		right := p.parseExpression(Lowest)
+		p.nextToken()
+		if p.currToken.Type != Comma && p.currToken.Type != Rbrace {
+			p.peekError(Comma)
+			return nil
+		}
+		if p.currToken.Type != Rbrace {
 			p.nextToken()
 		}
-		pair2, ok := pair.(*InfixExpression)
-		if !ok {
-			p.errors = append(p.errors,
-				fmt.Sprintf("expression is not infix. got=%T (%+v)",
-					pair, pair))
-			continue
-		}
-		if pair2.Token.Type != Colon {
-			p.errors = append(p.errors,
-				fmt.Sprintf("exp operator is not colon (:). got=%T (%+v)",
-					pair2, pair2))
-			continue
-		}
-		h.Pairs[pair2.Left] = pair2.Right
+		h.Pairs[left] = right
 	}
 	p.nextToken()
 	return h
