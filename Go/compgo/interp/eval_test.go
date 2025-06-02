@@ -312,6 +312,12 @@ func TestBuiltin(t *testing.T) {
 		{`first("異世界")`, "異"},
 		{`last("異世界")`, "界"},
 		{`rest(["hello", "異", "世", "界"])`, `["異","世","界"]`},
+		{`rest("hello 異世界")`, `ello 異世界`},
+		{`push(["hello"], "異", "世", "界");`, `["hello", "異", "世", "界"]`},
+		{`let a = ["hello"]; push(a, "異", "世", "界"); a;`,
+			`["hello", "異", "世", "界"]`},
+		{`push("hello ", "異", "世", "界");`, `hello 異世界`},
+		{`let a = "hello "; push(a, "異", "世", "界"); a;`, `hello 異世界`},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)

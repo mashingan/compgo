@@ -105,4 +105,35 @@ var builtins = map[string]*Builtin{
 			}
 		},
 	},
+	"push": {
+		Fn: func(args ...Object) Object {
+			if len(args) < 1 {
+				return wrongArguments(2, 0)
+			} else if len(args) == 1 {
+				return args[0]
+			}
+			switch arg := args[0].(type) {
+			case *String:
+				for _, s := range args[1:] {
+					switch ss := s.(type) {
+					case *String:
+						arg.Value += ss.Value
+					case *Integer:
+						arg.Value += fmt.Sprint(arg.Value)
+					case *Boolean:
+						arg.Value += fmt.Sprint(arg.Value)
+					default:
+						arg.Value += s.Inspect()
+					}
+				}
+				return arg
+			case *SliceObj:
+				arg.Elements = append(arg.Elements, args[1:]...)
+				return arg
+			default:
+				return &Error{fmt.Sprintf("argument to 'push' not supported, got %s",
+					args[0].Type())}
+			}
+		},
+	},
 }
