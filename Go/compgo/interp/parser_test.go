@@ -586,3 +586,32 @@ call  (  me  )  [okay];
 		}
 	}
 }
+
+func TestHashParsing(t *testing.T) {
+	input := `{"one": 1, "two": 2, "three": 3}`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	checkParserErrors(t, p)
+	stmt := prg.Statements[0].(*ExpressionStatement)
+	hash, ok := stmt.Expression.(*HashLiteral)
+	if !ok {
+		t.Fatalf("exp is not HashLiteral. got=%T", stmt.Expression)
+	}
+	if len(hash.Pairs) != 3 {
+		t.Errorf("hash.Pairs has wrong length. got=%d", len(hash.Pairs))
+	}
+	exp := map[string]int{
+		"one":   1,
+		"two":   2,
+		"three": 3,
+	}
+	for k, v := range hash.Pairs {
+		str, ok := k.(*StringLiteral)
+		if !ok {
+			t.Errorf("key is not string literal. got=%T", k)
+			continue
+		}
+		expv := exp[str.Value]
+		testIntLiteral(t, v, expv)
+	}
+}

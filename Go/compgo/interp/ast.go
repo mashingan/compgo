@@ -236,3 +236,20 @@ func (c *CallIndex) TokenLiteral() string { return c.Literal }
 func (c *CallIndex) String() string {
 	return fmt.Sprintf("%s[%s]", c.Left, c.Index)
 }
+
+type HashLiteral struct {
+	Token
+	Pairs map[Expression]Expression
+}
+
+func (h *HashLiteral) expressionNode()      {}
+func (h *HashLiteral) TokenLiteral() string { return h.Literal }
+func (h *HashLiteral) String() string {
+	bd := make([]string, len(h.Pairs))
+	idx := 0
+	for k, v := range h.Pairs {
+		bd[idx] = fmt.Sprintf("%s:%s", k, v)
+		idx++
+	}
+	return fmt.Sprintf("{%s}", strings.Join(bd, ","))
+}

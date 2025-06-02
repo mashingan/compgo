@@ -40,6 +40,7 @@ const (
 	Str
 	Lbracket
 	Rbracket
+	Colon
 )
 
 func (t TokenType) String() string {
@@ -78,4 +79,5 @@ var mapTokenDisplay = map[TokenType]string{
 	Str:       "String",
 	Lbracket:  "[",
 	Rbracket:  "]",
+	Colon:     ":",
 }
