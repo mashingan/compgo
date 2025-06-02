@@ -1,6 +1,8 @@
 package interp
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var (
 	TrueObject  = &Boolean{Primitive[bool]{true}}
@@ -310,18 +312,35 @@ func evalSliceIndex(n *CallIndex, env *Environment) Object {
 	if _, yes := idx.(*Error); yes {
 		return idx
 	}
-	slc, ok := left.(*SliceObj)
-	if !ok {
-		return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
-			SliceType, left, left)}
-	}
 	i, ok := idx.(*Integer)
 	if !ok {
 		return &Error{fmt.Sprintf("wrong index, expected %s got=%T (%+v)",
 			IntegerType, idx, idx)}
 	}
-	if i.Value >= len(slc.Elements) || i.Value < 0 {
+	if i.Value < 0 {
 		return NullObject
 	}
-	return slc.Elements[i.Value]
+	switch slc := left.(type) {
+	case *SliceObj:
+		if i.Value >= len(slc.Elements) {
+			return NullObject
+		}
+		return slc.Elements[i.Value]
+	case *String:
+		// if i.Value >= utf8.RuneCountInString(slc.Value) {
+		// 	return NullObject
+		// }
+		for idx, r := range slc.Value {
+			if idx == i.Value {
+				return &String{Primitive[string]{string(r)}}
+			}
+		}
+	}
+	// slc, ok := left.(*SliceObj)
+	// if !ok {
+	// 	return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
+	// 		SliceType, left, left)}
+	// }
+	return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
+		SliceType, left, left)}
 }

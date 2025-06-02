@@ -367,6 +367,8 @@ func TestIndexEval(t *testing.T) {
 		{`[][1]`, NullObject},
 		{`["hello", "異世界"][2-1]`, "異世界"},
 		{`let idx = 1*1; ["hello", "異世界"][idx]`, "異世界"},
+		{`let idx = 3*2; "hello 異世界"[idx]`, "異"},
+		{`let idx = 3*2; let isekai = "hello 異世界"; isekai[idx]`, "異"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
