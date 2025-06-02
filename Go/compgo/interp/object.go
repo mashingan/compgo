@@ -2,6 +2,7 @@ package interp
 
 import (
 	"fmt"
+	"hash/fnv"
 	"strings"
 )
 
@@ -19,6 +20,7 @@ const (
 	BuiltinType    = "BUILTIN"
 	SliceType      = "ARRAY"
 	IndexType      = "INDEX"
+	HashType       = "HASH"
 )
 
 type Object interface {
@@ -121,4 +123,51 @@ type IndexObj struct {
 func (*IndexObj) Type() ObjectType { return SliceType }
 func (s *IndexObj) Inspect() string {
 	return fmt.Sprintf("%s[%s]", s.Left.Inspect(), s.Index.Inspect())
+}
+
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
+func (b *Boolean) HashKey() HashKey {
+	h := HashKey{b.Type(), 0}
+	if b.Value {
+		h.Value = 1
+	}
+	return h
+}
+
+func (i *Integer) HashKey() HashKey {
+	return HashKey{i.Type(), uint64(i.Value)}
+}
+
+func (s *String) HashKey() HashKey {
+	hh := fnv.New64a()
+	hh.Write([]byte(s.Value))
+	h := HashKey{s.Type(), hh.Sum64()}
+	return h
+}
+
+type HashPair struct {
+	Key, Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (*Hash) Type() ObjectType { return HashType }
+func (h *Hash) Inspect() string {
+	p := make([]string, len(h.Pairs))
+	count := 0
+	for _, kv := range h.Pairs {
+		p[count] = fmt.Sprintf("%s:%s", kv.Key.Inspect(), kv.Value.Inspect())
+		count++
+	}
+	return fmt.Sprintf("{%s}", strings.Join(p, ","))
+}
+
+type Hashable interface {
+	HashKey() HashKey
 }

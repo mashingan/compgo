@@ -410,3 +410,40 @@ func TestIndexEval(t *testing.T) {
 		}
 	}
 }
+
+func TestHashLiteralEval(t *testing.T) {
+	input := `let two = "two";
+{
+	"one": 10 - 9,
+	two: 1 + 1,
+	"thr" + "ee" : 6 / 2,
+	4: 4,
+	true: 5,
+	false: 6,
+}`
+	evl := testEval(input)
+	r, ok := evl.(*Hash)
+	if !ok {
+		t.Fatalf("object is not hash. got=%T (%+v)", evl, evl)
+	}
+	exps := map[HashKey]int{
+		(&String{Primitive[string]{"one"}}).HashKey():   1,
+		(&String{Primitive[string]{"two"}}).HashKey():   2,
+		(&String{Primitive[string]{"three"}}).HashKey(): 3,
+		(&Integer{Primitive[int]{4}}).HashKey():         4,
+		TrueObject.HashKey():                            5,
+		FalseObject.HashKey():                           6,
+	}
+	if len(r.Pairs) != len(exps) {
+		t.Fatalf("got wrong number of pairs. got=%d", len(r.Pairs))
+	}
+
+	for expk, expv := range exps {
+		pair, ok := r.Pairs[expk]
+		if !ok {
+			t.Error("no pair given key in pairs")
+		}
+		testIntegerObject(t, pair.Value, expv)
+	}
+
+}

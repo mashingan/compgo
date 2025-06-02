@@ -88,6 +88,8 @@ func Eval(node Node, env *Environment) Object {
 		return sl
 	case *CallIndex:
 		return evalSliceIndex(n, env)
+	case *HashLiteral:
+		return evalHash(n, env)
 	}
 	return nil
 }
@@ -327,20 +329,32 @@ func evalSliceIndex(n *CallIndex, env *Environment) Object {
 		}
 		return slc.Elements[i.Value]
 	case *String:
-		// if i.Value >= utf8.RuneCountInString(slc.Value) {
-		// 	return NullObject
-		// }
 		for idx, r := range slc.Value {
 			if idx == i.Value {
 				return &String{Primitive[string]{string(r)}}
 			}
 		}
 	}
-	// slc, ok := left.(*SliceObj)
-	// if !ok {
-	// 	return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
-	// 		SliceType, left, left)}
-	// }
 	return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
 		SliceType, left, left)}
+}
+
+func evalHash(n *HashLiteral, env *Environment) Object {
+	h := &Hash{map[HashKey]HashPair{}}
+	for k, v := range n.Pairs {
+		kk := Eval(k, env)
+		if _, yes := kk.(*Error); yes {
+			return kk
+		}
+		hk, ok := kk.(Hashable)
+		if !ok {
+			return &Error{fmt.Sprintf("not hashable key: %s", kk.Type())}
+		}
+		vv := Eval(v, env)
+		if _, yes := vv.(*Error); yes {
+			return vv
+		}
+		h.Pairs[hk.HashKey()] = HashPair{kk, vv}
+	}
+	return h
 }
