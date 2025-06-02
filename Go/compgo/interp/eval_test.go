@@ -307,22 +307,35 @@ func TestBuiltin(t *testing.T) {
 		{`len("hello 異世界")`, 9},
 		{`len(1)`, "argument to 'len' not supported, got INTEGER"},
 		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+		{`first(["hello", "異世界"])`, "hello"},
+		{`last(["hello", "異世界"])`, "異世界"},
+		{`first("異世界")`, "異"},
+		{`last("異世界")`, "界"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
-		switch exp := tt.expected.(type) {
-		case int:
-			testIntegerObject(t, evl, exp)
-		case string:
-			errobj, ok := evl.(*Error)
+		switch exp := evl.(type) {
+		case *Integer:
+			texp, ok := tt.expected.(int)
 			if !ok {
-				t.Errorf("object is not Error. got=%T (%+v)", evl, evl)
+				t.Errorf("wrong expected type, want int got=%T (%+v)",
+					tt.expected, tt.expected)
 				continue
 			}
-			if errobj.Msg != exp {
+			testIntegerObject(t, evl, texp)
+		case *Error:
+			sexp, _ := tt.expected.(string)
+			if exp.Msg != sexp {
 				t.Errorf("wrong error mesage. expected=%q, got=%q",
-					exp, errobj.Msg)
+					exp, exp.Msg)
 			}
+		case *String:
+			stxp, _ := tt.expected.(string)
+			if exp.Value != stxp {
+				t.Errorf("wrong string. expected=%q, got=%q",
+					stxp, exp.Value)
+			}
+
 		}
 	}
 }
