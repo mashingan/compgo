@@ -311,6 +311,7 @@ func TestBuiltin(t *testing.T) {
 		{`last(["hello", "異世界"])`, "異世界"},
 		{`first("異世界")`, "異"},
 		{`last("異世界")`, "界"},
+		{`rest(["hello", "異", "世", "界"])`, `["異","世","界"]`},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)

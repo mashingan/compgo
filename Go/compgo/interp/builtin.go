@@ -77,4 +77,32 @@ var builtins = map[string]*Builtin{
 			}
 		},
 	},
+	"rest": {
+		func(args ...Object) Object {
+			if len(args) != 1 {
+				return wrongArguments(1, len(args))
+			}
+			switch arg := args[0].(type) {
+			case *String:
+				length := utf8.RuneCountInString(arg.Value) - 1
+				if length < 0 {
+					length = 0
+				}
+				_, sz := utf8.DecodeRuneInString(arg.Value)
+				arg.Value = arg.Value[sz:]
+				return arg
+			case *SliceObj:
+				length := len(arg.Elements)
+				if length < 0 {
+					length = 0
+				}
+				arg.Elements = arg.Elements[length:]
+				return arg
+			default:
+				return &Error{fmt.Sprintf("argument to 'last' not supported, got %s",
+					args[len(args)-1].Type())}
+
+			}
+		},
+	},
 }
