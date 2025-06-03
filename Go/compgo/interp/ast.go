@@ -3,6 +3,7 @@ package interp
 import (
 	"fmt"
 	"strings"
+	"sync"
 )
 
 type Node interface {
@@ -252,4 +253,30 @@ func (h *HashLiteral) String() string {
 		idx++
 	}
 	return fmt.Sprintf("{%s}", strings.Join(bd, ","))
+}
+
+type ModifierFunc func(Node) Node
+
+func Modify(node Node, modifier ModifierFunc) Node {
+	switch node := node.(type) {
+	case *Program:
+		for i, statement := range node.Statements {
+			node.Statements[i] = Modify(statement, modifier).(Statement)
+		}
+	case *ExpressionStatement:
+		node.Expression, _ = Modify(node.Expression, modifier).(Expression)
+	case *InfixExpression:
+		var w sync.WaitGroup
+		w.Add(2)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Left, _ = Modify(node.Left, modifier).(Expression)
+		}(&w)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Right, _ = Modify(node.Right, modifier).(Expression)
+		}(&w)
+		w.Wait()
+	}
+	return modifier(node)
 }

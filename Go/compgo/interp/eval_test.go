@@ -494,3 +494,26 @@ func TestQuoteEval(t *testing.T) {
 		}
 	}
 }
+
+func TestUnquoteEval(t *testing.T) {
+	tests := []struct{ input, expected string }{
+		{"quote(unquote(4))", "4"},
+		{"quote(unquote(4+4))", "8"},
+		{"quote(8 + unquote(4+4))", "(8+8)"},
+		{"quote(unquote(4+4) + 8)", "(8+8)"},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		q, ok := evl.(*Quote)
+		if !ok {
+			t.Errorf("expected *quote. got=%T (%+v)", evl, evl)
+			continue
+		}
+		if q.Node == nil {
+			t.Error("quote.Node is nil")
+		}
+		if q.Node.String() != tt.expected {
+			t.Errorf("not equal. got=%q want=%q", q.Node.String(), tt.expected)
+		}
+	}
+}
