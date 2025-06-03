@@ -347,6 +347,7 @@ func (p *Parser) parseHashMap() Expression {
 		p.nextToken()
 		right := p.parseExpression(Lowest)
 		p.nextToken()
+		h.Pairs[left] = right
 		if p.currToken.Type != Comma && p.currToken.Type != Rbrace {
 			p.peekError(Comma)
 			return nil
@@ -354,8 +355,6 @@ func (p *Parser) parseHashMap() Expression {
 		if p.currToken.Type != Rbrace {
 			p.nextToken()
 		}
-		h.Pairs[left] = right
 	}
-	p.nextToken()
 	return h
 }

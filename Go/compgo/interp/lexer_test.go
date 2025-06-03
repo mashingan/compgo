@@ -287,7 +287,7 @@ func TestSliceLexer(t *testing.T) {
 }
 
 func TestColonLexer(t *testing.T) {
-	input := `{a: b}`
+	input := `{a: b}[cc]`
 	tests := []struct {
 		expectedType    TokenType
 		expectedLiteral string
@@ -297,6 +297,9 @@ func TestColonLexer(t *testing.T) {
 		{Colon, ":"},
 		{Ident, "b"},
 		{Rbrace, "}"},
+		{Lbracket, "["},
+		{Ident, "cc"},
+		{Rbracket, "]"},
 		{Eof, ""},
 	}
 	l := NewLexer(input)

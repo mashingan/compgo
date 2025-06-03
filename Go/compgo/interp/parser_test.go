@@ -548,18 +548,20 @@ a[1];
 [1, 2, 3, 4][3];
 b[2 * 5];
 call  (  me  )  [okay];
+	{ 1: 2,  2   : 3, 3: 4,}  [okay];
 `
 	tests := []struct{ expinput, expleft, expindex string }{
 		{"a[1]", "a", "1"},
 		{"[1,2,3,4][3]", "[1,2,3,4]", "3"},
 		{"b[(2*5)]", "b", "(2*5)"},
 		{"call(me)[okay]", "call(me)", "okay"},
+		{"{1:2,2:3,3:4}[okay]", "{1:2,2:3,3:4}", "okay"},
 	}
 	p := NewParser(NewLexer(input))
 	prg := p.ParseProgram()
 	t.Log("prg:", prg)
 	checkParserErrors(t, p)
-	if len(prg.Statements) != 4 {
+	if len(prg.Statements) != 5 {
 		t.Fatalf("expected 4 statements. got=%d", len(prg.Statements))
 	}
 	for i, tt := range tests {
@@ -668,4 +670,44 @@ func TestHashExpressionKeyParsing(t *testing.T) {
 		}
 		testInfixExpression(t, v, vv.l, vv.op, vv.r)
 	}
+}
+
+func TestHashIndexParsing(t *testing.T) {
+	input := `{1:2, 2  : 3, 3 : 4}[5]`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	checkParserErrors(t, p)
+	t.Log("prg:", prg)
+	stmt := prg.Statements[0].(*ExpressionStatement)
+	idx, ok := stmt.Expression.(*CallIndex)
+	if !ok {
+		t.Fatalf("exp is not HashLiteral. got=%T", stmt.Expression)
+	}
+	hash, ok := idx.Left.(*HashLiteral)
+	if !ok {
+		t.Fatalf("idx is not hash. got=%T (%+v)", idx.Left, idx.Left)
+	}
+	exps := map[int]int{1: 2, 2: 3, 3: 4}
+	for k, v := range hash.Pairs {
+		kk, ok := k.(*IntLiteral)
+		if !ok {
+			t.Errorf("key is not integer. got=%T (%+v)", k, k)
+			continue
+		}
+		vv, ok := v.(*IntLiteral)
+		if !ok {
+			t.Errorf("val is not integer. got=%T (%+v)", v, v)
+			continue
+		}
+		expv, exists := exps[kk.Value]
+		if !exists {
+			t.Errorf("key '%s' expected exists. got nothing", kk.String())
+		}
+		testIntLiteral(t, vv, expv)
+	}
+	i, ok := idx.Index.(*IntLiteral)
+	if !ok {
+		t.Fatalf("index is not integer. got=%T (%+v)", idx.Index, idx.Index)
+	}
+	testIntLiteral(t, i, 5)
 }
