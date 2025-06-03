@@ -21,6 +21,8 @@ const (
 	SliceType      = "ARRAY"
 	IndexType      = "INDEX"
 	HashType       = "HASH"
+	QuoteType      = "QUOTE"
+	UnquoteType    = "UNQUOTE"
 )
 
 type Object interface {
@@ -170,4 +172,13 @@ func (h *Hash) Inspect() string {
 
 type Hashable interface {
 	HashKey() HashKey
+}
+
+type Quote struct {
+	Node
+}
+
+func (*Quote) Type() ObjectType { return QuoteType }
+func (h *Quote) Inspect() string {
+	return fmt.Sprintf("QUOTE(%s)", h.Node.String())
 }

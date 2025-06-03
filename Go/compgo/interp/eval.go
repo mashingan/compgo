@@ -69,6 +69,9 @@ func Eval(node Node, env *Environment) Object {
 		body := n.Body
 		return &Function{Parameters: params, Env: env, Body: body}
 	case *CallExpression:
+		if n.Func.String() == "quote" {
+			return &Quote{n.Args[0]}
+		}
 		fn := Eval(n.Func, env)
 		if _, yes := fn.(*Error); yes {
 			return fn

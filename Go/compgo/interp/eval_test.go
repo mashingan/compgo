@@ -472,3 +472,25 @@ func TestHashIndexEval(t *testing.T) {
 		testNullObject(t, evl)
 	}
 }
+
+func TestQuoteEval(t *testing.T) {
+	tests := []struct{ input, expected string }{
+		{"quote(5)", "5"},
+		{"quote(5+8)", "(5+8)"},
+		{"quote(異世界)", "異世界"},
+		{"quote(異世界+勇者)", "(異世界+勇者)"},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		quote, ok := evl.(*Quote)
+		if !ok {
+			t.Fatalf("expected quote. got=%T (%+v)", evl, evl)
+		}
+		if quote.Node == nil {
+			t.Fatal("quote.Node is nil")
+		}
+		if quote.Node.String() != tt.expected {
+			t.Errorf("not equal. got=%q want=%q", quote.Node.String(), tt.expected)
+		}
+	}
+}
