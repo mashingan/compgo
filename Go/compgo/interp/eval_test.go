@@ -183,6 +183,7 @@ if (10 > 1) {
 }`, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"神業", "identifier not found: 神業"},
 		{`"Hello" - "world"`, "unknown operator: STRING - STRING"},
+		{`{"name": "Monkey"}[fn(x){ x }]`, "unknown as hash key: FUNCTION"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
@@ -446,4 +447,28 @@ func TestHashLiteralEval(t *testing.T) {
 		testIntegerObject(t, pair.Value, expv)
 	}
 
+}
+
+func TestHashIndexEval(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected any
+	}{
+		{`{"foo": 5}["foo"]`, 5},
+		{`{"foo": 5}["bar"]`, nil},
+		{`let key = "foo"; {"foo": 5}[key]`, 5},
+		{`{}["foo"]`, nil},
+		{`{5:5}[5]`, 5},
+		{`{true:5}[true]`, 5},
+		{`{false:5}[false]`, 5},
+	}
+	for _, tt := range tests {
+		evl := testEval(tt.input)
+		i, ok := tt.expected.(int)
+		if ok {
+			testIntegerObject(t, evl, i)
+			continue
+		}
+		testNullObject(t, evl)
+	}
 }

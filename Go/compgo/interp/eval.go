@@ -314,26 +314,48 @@ func evalSliceIndex(n *CallIndex, env *Environment) Object {
 	if _, yes := idx.(*Error); yes {
 		return idx
 	}
-	i, ok := idx.(*Integer)
-	if !ok {
-		return &Error{fmt.Sprintf("wrong index, expected %s got=%T (%+v)",
-			IntegerType, idx, idx)}
-	}
-	if i.Value < 0 {
-		return NullObject
+	checkIfIdxInt := func(idx Object) (*Integer, bool, Object) {
+		i, ok := idx.(*Integer)
+		if !ok {
+			err := &Error{fmt.Sprintf("wrong index, expected %s got=%T (%+v)",
+				IntegerType, idx, idx)}
+			return nil, false, err
+		}
+		if i.Value < 0 {
+			return nil, false, NullObject
+		}
+		return i, true, nil
 	}
 	switch slc := left.(type) {
 	case *SliceObj:
+		i, ok, errOrNull := checkIfIdxInt(idx)
+		if !ok && errOrNull != nil {
+			return errOrNull
+		}
 		if i.Value >= len(slc.Elements) {
 			return NullObject
 		}
 		return slc.Elements[i.Value]
 	case *String:
+		i, ok, errOrNull := checkIfIdxInt(idx)
+		if !ok && errOrNull != nil {
+			return errOrNull
+		}
 		for idx, r := range slc.Value {
 			if idx == i.Value {
 				return &String{Primitive[string]{string(r)}}
 			}
 		}
+	case *Hash:
+		hk, ok := idx.(Hashable)
+		if !ok {
+			return &Error{fmt.Sprintf("unknown as hash key: %s", idx.Type())}
+		}
+		hv, ok := slc.Pairs[hk.HashKey()]
+		if !ok {
+			return NullObject
+		}
+		return hv.Value
 	}
 	return &Error{fmt.Sprintf("wrong type, expected %s got=%T (%+v)",
 		SliceType, left, left)}
@@ -348,7 +370,7 @@ func evalHash(n *HashLiteral, env *Environment) Object {
 		}
 		hk, ok := kk.(Hashable)
 		if !ok {
-			return &Error{fmt.Sprintf("not hashable key: %s", kk.Type())}
+			return &Error{fmt.Sprintf("unusable as hash key: %s", kk.Type())}
 		}
 		vv := Eval(v, env)
 		if _, yes := vv.(*Error); yes {
