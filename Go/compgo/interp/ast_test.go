@@ -46,7 +46,6 @@ func TestModify(t *testing.T) {
 		i.Value = 2
 		return i
 	}
-
 	tests := []struct{ input, expect Node }{
 		{one(), two()},
 		{&Program{
@@ -67,6 +66,72 @@ func TestModify(t *testing.T) {
 			&InfixExpression{Left: two(), Operator: "+", Right: one()},
 			&InfixExpression{Left: two(), Operator: "+", Right: two()},
 		},
+		{
+			&PrefixExpression{Operator: "-", Right: one()},
+			&PrefixExpression{Operator: "-", Right: two()},
+		},
+		{
+			&CallIndex{Left: one(), Index: one()},
+			&CallIndex{Left: two(), Index: two()},
+		},
+		{
+			&IfExpression{
+				Condition: one(),
+				Then: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: one()},
+					},
+				},
+				Else: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: one()},
+					},
+				},
+			},
+			&IfExpression{
+				Condition: two(),
+				Then: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: two()},
+					},
+				},
+				Else: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: two()},
+					},
+				},
+			},
+		},
+		{
+			&ReturnStatement{Value: one()},
+			&ReturnStatement{Value: two()},
+		},
+		{
+			&LetStatement{Value: one()},
+			&LetStatement{Value: two()},
+		},
+		{
+			&FuncLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: one()},
+					},
+				},
+			},
+			&FuncLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{Expression: two()},
+					},
+				},
+			},
+		},
+		{
+			&Slices{Elements: []Expression{one(), one()}},
+			&Slices{Elements: []Expression{two(), two()}},
+		},
 	}
 	for _, tt := range tests {
 		modified := Modify(tt.input, one2Two)
@@ -76,4 +141,22 @@ func TestModify(t *testing.T) {
 				modified, tt.expect)
 		}
 	}
+	hashLit := &HashLiteral{
+		Pairs: map[Expression]Expression{
+			one(): one(),
+			one(): one(),
+		},
+	}
+	Modify(hashLit, one2Two)
+	for k, v := range hashLit.Pairs {
+		kk, _ := k.(*IntLiteral)
+		if kk.Value != 2 {
+			t.Errorf("value is not %d, got=%d", 2, kk.Value)
+		}
+		vv, _ := v.(*IntLiteral)
+		if vv.Value != 2 {
+			t.Errorf("value is not %d, got=%d", 2, vv.Value)
+		}
+	}
+
 }

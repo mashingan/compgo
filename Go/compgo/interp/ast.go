@@ -277,6 +277,85 @@ func Modify(node Node, modifier ModifierFunc) Node {
 			node.Right, _ = Modify(node.Right, modifier).(Expression)
 		}(&w)
 		w.Wait()
+	case *PrefixExpression:
+		node.Right, _ = Modify(node.Right, modifier).(Expression)
+	case *CallIndex:
+		var w sync.WaitGroup
+		w.Add(2)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Left, _ = Modify(node.Left, modifier).(Expression)
+		}(&w)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Index, _ = Modify(node.Index, modifier).(Expression)
+		}(&w)
+		w.Wait()
+	case *IfExpression:
+		var w sync.WaitGroup
+		w.Add(2)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Condition, _ = Modify(node.Condition, modifier).(Expression)
+		}(&w)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Then, _ = Modify(node.Then, modifier).(*BlockStatement)
+		}(&w)
+		if node.Else != nil {
+			w.Add(1)
+			go func(w *sync.WaitGroup) {
+				defer w.Done()
+				node.Else, _ = Modify(node.Else, modifier).(*BlockStatement)
+			}(&w)
+		}
+		w.Wait()
+	case *BlockStatement:
+		var w sync.WaitGroup
+		for i := range node.Statements {
+			w.Add(1)
+			go func(i int, w *sync.WaitGroup) {
+				defer w.Done()
+				node.Statements[i], _ = Modify(node.Statements[i], modifier).(Statement)
+			}(i, &w)
+		}
+		w.Wait()
+	case *ReturnStatement:
+		node.Value, _ = Modify(node.Value, modifier).(Expression)
+	case *LetStatement:
+		node.Value, _ = Modify(node.Value, modifier).(Expression)
+	case *FuncLiteral:
+		var w sync.WaitGroup
+		w.Add(1)
+		go func(w *sync.WaitGroup) {
+			defer w.Done()
+			node.Body, _ = Modify(node.Body, modifier).(*BlockStatement)
+		}(&w)
+		for i := range node.Parameters {
+			w.Add(1)
+			go func(i int, w *sync.WaitGroup) {
+				defer w.Done()
+				node.Parameters[i], _ = Modify(node.Parameters[i], modifier).(*Identifier)
+			}(i, &w)
+		}
+		w.Wait()
+	case *Slices:
+		var w sync.WaitGroup
+		for i := range node.Elements {
+			w.Add(1)
+			go func(i int, w *sync.WaitGroup) {
+				defer w.Done()
+				node.Elements[i], _ = Modify(node.Elements[i], modifier).(Expression)
+			}(i, &w)
+		}
+		w.Wait()
+	case *HashLiteral:
+		for k, v := range node.Pairs {
+			kk, _ := Modify(k, modifier).(Expression)
+			vv, _ := Modify(v, modifier).(Expression)
+			delete(node.Pairs, k)
+			node.Pairs[kk] = vv
+		}
 	}
 	return modifier(node)
 }
