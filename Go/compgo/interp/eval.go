@@ -425,3 +425,33 @@ func objectToAst(object Object) Node {
 		return nil
 	}
 }
+
+func DefineMacros(prg *Program, env *Environment) {
+	defs := map[int]struct{}{}
+	for i, stmt := range prg.Statements {
+		let, ok := stmt.(*LetStatement)
+		if !ok {
+			continue
+		}
+		mrc, ok := let.Value.(*MacroLiteral)
+		if !ok {
+			continue
+		}
+		macro := &MacroObj{
+			Parameters: mrc.Parameters,
+			Env:        env,
+			Body:       mrc.Body,
+		}
+		env.Set(let.Name.Value, macro)
+		defs[i] = struct{}{}
+	}
+	old := make([]Statement, len(prg.Statements))
+	copy(old, prg.Statements)
+	prg.Statements = []Statement{}
+	for i, stmt := range old {
+		if _, yes := defs[i]; yes {
+			continue
+		}
+		prg.Statements = append(prg.Statements, stmt)
+	}
+}

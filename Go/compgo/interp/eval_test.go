@@ -524,3 +524,44 @@ func TestUnquoteEval(t *testing.T) {
 		}
 	}
 }
+
+func TestDefineMacro(t *testing.T) {
+	input := `
+let number = 1;
+let func = fn(x, y) { x + y; };
+let mymacro = macro(x, y) { x + y; };
+`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	env := NewEnvironment()
+	DefineMacros(prg, env)
+	if len(prg.Statements) != 2 {
+		t.Fatalf("wrong number of statements. got=%d", len(prg.Statements))
+	}
+	_, ok := env.Get("number")
+	if ok {
+		t.Fatal("number should not defined")
+	}
+	_, ok = env.Get("func")
+	if ok {
+		t.Fatal("func should not defined")
+	}
+	m, ok := env.Get("mymacro")
+	if !ok {
+		t.Fatal("mymacro not in environment")
+	}
+	macro, ok := m.(*MacroObj)
+	if !ok {
+		t.Fatalf("object is not macro. got=%T (%+v)", m, m)
+	}
+	if len(macro.Parameters) != 2 {
+		t.Fatalf("wrong number of statements. got=%d", len(prg.Statements))
+	}
+	testLiteralExpression(t, macro.Parameters[0], "x")
+	testLiteralExpression(t, macro.Parameters[1], "y")
+	expbody := "(x+y)"
+	if macro.Body.String() != expbody {
+		t.Errorf("macro body is not expected=%q, got=%q",
+			expbody, macro.Body)
+	}
+}

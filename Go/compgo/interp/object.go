@@ -23,6 +23,7 @@ const (
 	HashType       = "HASH"
 	QuoteType      = "QUOTE"
 	UnquoteType    = "UNQUOTE"
+	MacroType      = "MACRO"
 )
 
 type Object interface {
@@ -181,4 +182,20 @@ type Quote struct {
 func (*Quote) Type() ObjectType { return QuoteType }
 func (h *Quote) Inspect() string {
 	return fmt.Sprintf("QUOTE(%s)", h.Node.String())
+}
+
+type MacroObj struct {
+	Parameters []*Identifier
+	Body       *BlockStatement
+	Env        *Environment
+}
+
+func (*MacroObj) Type() ObjectType { return MacroType }
+func (m *MacroObj) Inspect() string {
+	prm := make([]string, len(m.Parameters))
+	for i, s := range m.Parameters {
+		prm[i] = s.String()
+	}
+	return fmt.Sprintf("fn (%s) {\n%s\n}", strings.Join(prm, ", "), m.Body)
+
 }
