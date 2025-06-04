@@ -70,7 +70,8 @@ func Eval(node Node, env *Environment) Object {
 		return &Function{Parameters: params, Env: env, Body: body}
 	case *CallExpression:
 		if n.Func.String() == "quote" {
-			return &Quote{n.Args[0]}
+			nn := evalUnquoteCalls(n.Args[0], env)
+			return &Quote{nn}
 		}
 		fn := Eval(n.Func, env)
 		if _, yes := fn.(*Error); yes {
@@ -382,4 +383,45 @@ func evalHash(n *HashLiteral, env *Environment) Object {
 		h.Pairs[hk.HashKey()] = HashPair{kk, vv}
 	}
 	return h
+}
+
+func evalUnquoteCalls(n Node, env *Environment) Node {
+	return Modify(n, func(node Node) Node {
+		ce, ok := node.(*CallExpression)
+		if !ok || ce.Func.String() != "unquote" {
+			return node
+		}
+		if len(ce.Args) != 1 {
+			return node
+		}
+		unquoted := Eval(ce.Args[0], env)
+		return objectToAst(unquoted)
+	})
+}
+
+func objectToAst(object Object) Node {
+	switch o := object.(type) {
+	case *Integer:
+		t := Token{
+			Type:    Int,
+			Literal: fmt.Sprint(o.Value),
+		}
+		return &IntLiteral{Token: t, Value: o.Value}
+	case *String:
+		t := Token{
+			Type:    Str,
+			Literal: fmt.Sprint(o.Value),
+		}
+		return &StringLiteral{Token: t, Value: o.Value}
+	case *Boolean:
+		t := Token{
+			Type:    Str,
+			Literal: fmt.Sprint(o.Value),
+		}
+		return &BooleanLiteral{Token: t, Value: o.Value}
+	case *Quote:
+		return o.Node
+	default:
+		return nil
+	}
 }

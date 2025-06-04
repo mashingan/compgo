@@ -479,6 +479,7 @@ func TestQuoteEval(t *testing.T) {
 		{"quote(5+8)", "(5+8)"},
 		{"quote(異世界)", "異世界"},
 		{"quote(異世界+勇者)", "(異世界+勇者)"},
+		{"let 勇者 = 8; quote(勇者)", "勇者"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
@@ -501,6 +502,12 @@ func TestUnquoteEval(t *testing.T) {
 		{"quote(unquote(4+4))", "8"},
 		{"quote(8 + unquote(4+4))", "(8+8)"},
 		{"quote(unquote(4+4) + 8)", "(8+8)"},
+		{"let 勇者 = 8; quote(unquote(勇者))", "8"},
+		{"quote(unquote(true))", "true"},
+		{"quote(unquote(true == false))", "false"},
+		{"quote(unquote(quote(4 + 4)))", "(4+4)"},
+		{"let quotedInfix = quote(4 + 4); quote(unquote(4 + 4) + unquote(quotedInfix))",
+			"(8+(4+4))"},
 	}
 	for _, tt := range tests {
 		evl := testEval(tt.input)
