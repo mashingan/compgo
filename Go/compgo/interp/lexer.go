@@ -47,6 +47,7 @@ var mapTokenLexer = map[string]TokenType{
 	"[":      Lbracket,
 	"]":      Rbracket,
 	":":      Colon,
+	"macro":  Macro,
 }
 
 func (l *Lexer) skipWhitespaces() {
