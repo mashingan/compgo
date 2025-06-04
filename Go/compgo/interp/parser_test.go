@@ -711,3 +711,33 @@ func TestHashIndexParsing(t *testing.T) {
 	}
 	testIntLiteral(t, i, 5)
 }
+
+func TestMacroLiteralParsing(t *testing.T) {
+	input := "macro(x, y) { x + y; }"
+	p := NewParser(NewLexer(input))
+	prog := p.ParseProgram()
+	checkParserErrors(t, p)
+	if len(prog.Statements) != 1 {
+		t.Fatalf("prog stmt expected 1. got=%d", len(prog.Statements))
+	}
+	stmt, ok := prog.Statements[0].(*ExpressionStatement)
+	if !ok {
+		t.Fatalf("'%s' is not call expression stmt. got=%T",
+			prog.Statements[0], prog.Statements[0])
+	}
+	macro, ok := stmt.Expression.(*MacroLiteral)
+	if !ok {
+		t.Fatalf("'%s' is not macro literal. got=%T", stmt.Expression, stmt.Expression)
+	}
+	if len(macro.Parameters) != 2 {
+		t.Fatalf("expr argmacroect 2. got=%T", len(macro.Parameters))
+	}
+	testLiteralExpression(t, macro.Parameters[0], "x")
+	testLiteralExpression(t, macro.Parameters[1], "y")
+	body, ok := macro.Body.Statements[0].(*ExpressionStatement)
+	if !ok {
+		t.Fatalf("macro body stmt is not expr stmt. got=%T (%+v)",
+			macro.Body.Statements[0], macro.Body.Statements[1])
+	}
+	testInfixExpression(t, body.Expression, "x", "+", "y")
+}

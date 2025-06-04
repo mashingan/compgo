@@ -60,6 +60,7 @@ func NewParser(l *Lexer) *Parser {
 	p.prefixs[Str] = p.parseStrLiteral
 	p.prefixs[Lbracket] = p.parseSlice
 	p.prefixs[Lbrace] = p.parseHashMap
+	p.prefixs[Macro] = p.parseMacroLiteral
 	p.infixs = map[TokenType]infixParseFn{}
 	p.infixs[Plus] = p.parseInfixExpression
 	p.infixs[Minus] = p.parseInfixExpression
@@ -282,7 +283,6 @@ func (p *Parser) parseFuncLiteral() Expression {
 		return nil
 	}
 	p.nextToken()
-	// fn.Parameters = p.parseCallArguments()
 	for p.currToken.Type != Rparen {
 		fn.Parameters = append(fn.Parameters,
 			&Identifier{p.currToken, p.currToken.Literal})
@@ -357,4 +357,11 @@ func (p *Parser) parseHashMap() Expression {
 		}
 	}
 	return h
+}
+
+func (p *Parser) parseMacroLiteral() Expression {
+	fn := p.parseFuncLiteral()
+	ffn, _ := fn.(*FuncLiteral)
+	return &MacroLiteral{Token: ffn.Token, Parameters: ffn.Parameters,
+		Body: ffn.Body}
 }

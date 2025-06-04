@@ -359,3 +359,19 @@ func Modify(node Node, modifier ModifierFunc) Node {
 	}
 	return modifier(node)
 }
+
+type MacroLiteral struct {
+	Token
+	Parameters []*Identifier
+	Body       *BlockStatement
+}
+
+func (m *MacroLiteral) expressionNode()      {}
+func (m *MacroLiteral) TokenLiteral() string { return m.Literal }
+func (m *MacroLiteral) String() string {
+	params := make([]string, len(m.Parameters))
+	for i, p := range m.Parameters {
+		params[i] = p.String()
+	}
+	return fmt.Sprintf("macro(%s)%s", strings.Join(params, ","), m.Body.String())
+}
