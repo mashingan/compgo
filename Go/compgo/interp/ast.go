@@ -375,3 +375,34 @@ func (m *MacroLiteral) String() string {
 	}
 	return fmt.Sprintf("macro(%s)%s", strings.Join(params, ","), m.Body.String())
 }
+
+func ExpandMacros(prg Node, env *Environment) Node {
+	return Modify(prg, func(n Node) Node {
+		ce, ok := n.(*CallExpression)
+		if !ok {
+			return n
+		}
+		id, ok := ce.Func.(*Identifier)
+		if !ok {
+			return n
+		}
+		o, ok := env.Get(id.Value)
+		if !ok {
+			return n
+		}
+		macro, ok := o.(*MacroObj)
+		if !ok {
+			return n
+		}
+		newenv := NewEnvironmentFrame(macro.Env)
+		for i, p := range macro.Parameters {
+			newenv.Set(p.Value, &Quote{ce.Args[i]})
+		}
+		evl := Eval(macro.Body, newenv)
+		quote, ok := evl.(*Quote)
+		if !ok {
+			return n
+		}
+		return quote.Node
+	})
+}

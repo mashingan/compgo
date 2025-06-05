@@ -565,3 +565,31 @@ let mymacro = macro(x, y) { x + y; };
 			expbody, macro.Body)
 	}
 }
+
+func TestExpandMacro(t *testing.T) {
+	tests := []struct{ input, expected string }{
+		{
+			`let infix = macro() { quote(1+2); };infix();`,
+			`(1+2)`,
+		},
+		{
+			`let rev = macro(a, b) { quote(unquote(b) - unquote(a)); };
+			rev(2+2, 10-5);`,
+			`(10-5)-(2+2)`,
+		},
+	}
+	for _, tt := range tests {
+		p := NewParser(NewLexer(tt.expected))
+		prgexp := p.ParseProgram()
+		p = NewParser(NewLexer(tt.input))
+		prginp := p.ParseProgram()
+		env := NewEnvironment()
+		DefineMacros(prginp, env)
+		t.Log("prginp:", prginp)
+		expanded := ExpandMacros(prginp, env)
+		if expanded.String() != prgexp.String() {
+			t.Errorf("not equal. want=%q got=%q",
+				prgexp.String(), expanded.String())
+		}
+	}
+}
