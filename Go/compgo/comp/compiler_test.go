@@ -215,12 +215,14 @@ func TestInstructionsString(t *testing.T) {
 func TestConditionalsCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{`if (true) { 10 }; 3333`, []any{10, 3333}, []Instructions{
-			Make(OpTrue),           // 0000
-			Make(OpJumpIfFalsy, 7), // 0001
-			Make(OpConstant, 0),    // 0004
-			Make(OpPop),            // 0007
-			Make(OpConstant, 1),    // 0008
-			Make(OpPop),            // 00011
+			Make(OpTrue),            // 0000
+			Make(OpJumpIfFalsy, 10), // 0001
+			Make(OpConstant, 0),     // 0004
+			Make(OpJump, 11),        // 0007
+			Make(OpNull),            // 0010
+			Make(OpPop),             // 0011
+			Make(OpConstant, 1),     // 0012
+			Make(OpPop),             // 0015
 		}},
 		{`if (true) { 10 } else { 20 }; 3333`, []any{10, 3333}, []Instructions{
 			Make(OpTrue),            // 0000
@@ -231,6 +233,14 @@ func TestConditionalsCompile(t *testing.T) {
 			Make(OpPop),             // 00013
 			Make(OpConstant, 2),     // 00014
 			Make(OpPop),             // 00017
+		}},
+		{`if (false) { 10 }`, []any{10}, []Instructions{
+			Make(OpFalse),           // 0000
+			Make(OpJumpIfFalsy, 10), // 0001
+			Make(OpConstant, 0),     // 0004
+			Make(OpJump, 11),        // 0007
+			Make(OpNull),            // 0010
+			Make(OpPop),             // 0011
 		}},
 	}
 	runCompilerTest(t, tests)

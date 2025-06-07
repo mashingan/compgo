@@ -43,6 +43,10 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 		if err != nil {
 			t.Errorf("%s", err)
 		}
+	case nil:
+		if actual != interp.NullObject {
+			t.Errorf("object is not null. got=%T (%+v)", actual, actual)
+		}
 	}
 }
 
@@ -105,6 +109,8 @@ func TestConditionalsVm(t *testing.T) {
 		{"if (1 < 2) { 10 }", 10},
 		{"if (1 < 2) { 10 } else { 20 }", 10},
 		{"if (1 > 2) { 10 } else { 20 }", 20},
+		{"if (false) { 10 }", nil},
+		{"if (1 > 2) { 10 }", nil},
 	}
 	runVmTests(t, tests)
 }

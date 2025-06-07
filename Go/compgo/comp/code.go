@@ -31,6 +31,7 @@ const (
 	OpMinus
 	OpJumpIfFalsy
 	OpJump
+	OpNull
 )
 
 type Definition struct {
@@ -57,6 +58,7 @@ var definitions = map[Opcode]Definition{
 	OpMinus:       {"OpMinus", []int{}},
 	OpJump:        {"OpJump", []int{2}},
 	OpJumpIfFalsy: {"OpJumpIfFalsy", []int{2}},
+	OpNull:        {"OpNull", []int{}},
 }
 
 func (i Instructions) String() string {

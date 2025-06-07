@@ -154,6 +154,8 @@ func (vm *Vm) Run() error {
 			if !isTruthy(cond) {
 				ip = int(addr)
 			}
+		case OpNull:
+			vm.Push(interp.NullObject)
 		}
 	}
 	return nil
@@ -275,6 +277,9 @@ func notObj(vm *Vm, obj interp.Object) error {
 		} else {
 			vm.Push(interp.FalseObject)
 		}
+		return nil
+	case *interp.Null:
+		vm.Push(interp.TrueObject)
 		return nil
 	default:
 		return fmt.Errorf("cannot be applied for not-equality. got=%T (%+v)",

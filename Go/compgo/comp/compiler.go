@@ -128,16 +128,17 @@ func (c *Compiler) compileIfExpression(n *interp.IfExpression) error {
 		return err
 	}
 	c.removeLastIfPop()
+	jumpAnyway := c.emit(OpJump, 0)
 	c.jumpToHere(OpJumpIfFalsy, jumpyPost)
 	if n.Else != nil {
-		jumpAnyway := c.emit(OpJump, 0)
-		c.jumpToHere(OpJumpIfFalsy, jumpyPost)
 		if err = c.Compile(n.Else); err != nil {
 			return err
 		}
-		c.removeLastIfPop()
-		c.jumpToHere(OpJump, jumpAnyway)
+	} else {
+		c.emit(OpNull)
 	}
+	c.removeLastIfPop()
+	c.jumpToHere(OpJump, jumpAnyway)
 	return nil
 }
 
