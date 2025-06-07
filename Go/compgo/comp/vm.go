@@ -102,6 +102,26 @@ func (vm *Vm) Run() error {
 			vm.Push(interp.TrueObject)
 		case OpFalse:
 			vm.Push(interp.FalseObject)
+		case OpMinus:
+			lastval, err := vm.Pop()
+			if err != nil {
+				return err
+			}
+			i, ok := lastval.(*interp.Integer)
+			if !ok {
+				return fmt.Errorf("wrong type not integer. got=%T (%+v)",
+					lastval, lastval)
+			}
+			i.Value *= -1
+			vm.Push(i)
+		case OpBang:
+			lastitem, err := vm.Pop()
+			if err != nil {
+				return err
+			}
+			if err := notObj(vm, lastitem); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -208,6 +228,28 @@ func eqObj(vm *Vm) error {
 	})
 }
 
+func notObj(vm *Vm, obj interp.Object) error {
+	switch b := obj.(type) {
+	case *interp.Boolean:
+		if b.Value {
+			vm.Push(interp.FalseObject)
+		} else {
+			vm.Push(interp.TrueObject)
+		}
+		return nil
+	case *interp.Integer:
+		if b.Value == 0 {
+			vm.Push(interp.TrueObject)
+		} else {
+			vm.Push(interp.FalseObject)
+		}
+		return nil
+	default:
+		return fmt.Errorf("cannot be applied for not-equality. got=%T (%+v)",
+			obj, obj)
+	}
+}
+
 func neqObj(vm *Vm) error {
 	if err := eqObj(vm); err != nil {
 		return err
@@ -216,16 +258,7 @@ func neqObj(vm *Vm) error {
 	if err != nil {
 		return err
 	}
-	lb, ok := lastBool.(*interp.Boolean)
-	if !ok {
-		return fmt.Errorf("not a boolean value")
-	}
-	if lb.Value {
-		vm.Push(interp.FalseObject)
-	} else {
-		vm.Push(interp.TrueObject)
-	}
-	return nil
+	return notObj(vm, lastBool)
 }
 
 func orderableObj(vm *Vm, test func(l, r *interp.Integer) bool) error {

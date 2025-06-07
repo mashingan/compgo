@@ -60,6 +60,19 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return fmt.Errorf("unknown operator %s", n.Operator)
 		}
 		c.emit(nop)
+	case *interp.PrefixExpression:
+		err := c.Compile(n.Right)
+		if err != nil {
+			return nil
+		}
+		switch n.Operator {
+		case "-":
+			c.emit(OpMinus)
+		case "!":
+			c.emit(OpBang)
+		default:
+			return fmt.Errorf("unknown operator %s", n.Operator)
+		}
 	case *interp.IntLiteral:
 		itg := &interp.Integer{Primitive: interp.Primitive[int]{Value: n.Value}}
 		c.constants = append(c.constants, itg)

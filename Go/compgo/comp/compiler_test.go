@@ -45,6 +45,17 @@ func TestIntegerArith(t *testing.T) {
 			Make(OpDiv),
 			Make(OpPop),
 		}},
+		{"-1", []any{}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpMinus),
+			Make(OpPop),
+		}},
+	}
+	runCompilerTest(t, tests)
+}
+
+func TestBooleanCompile(t *testing.T) {
+	tests := []compilerTestCase{
 		{"1==2", []any{1, 2}, []Instructions{
 			Make(OpConstant, 0),
 			Make(OpConstant, 1),
@@ -87,6 +98,16 @@ func TestIntegerArith(t *testing.T) {
 		}},
 		{"false", []any{}, []Instructions{
 			Make(OpFalse),
+			Make(OpPop),
+		}},
+		{"!false", []any{}, []Instructions{
+			Make(OpFalse),
+			Make(OpBang),
+			Make(OpPop),
+		}},
+		{"!true", []any{}, []Instructions{
+			Make(OpTrue),
+			Make(OpBang),
 			Make(OpPop),
 		}},
 	}
