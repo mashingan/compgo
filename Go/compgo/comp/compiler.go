@@ -99,6 +99,11 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if err := c.compileIfExpression(n); err != nil {
 			return err
 		}
+	case *interp.LetStatement:
+		if err := c.Compile(n.Value); err != nil {
+			return err
+		}
+		c.emit(OpSetGlobal) // TODO: Fix operand address
 	}
 	return nil
 }
