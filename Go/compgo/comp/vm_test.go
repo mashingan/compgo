@@ -45,6 +45,15 @@ func TestIntegerArithVm(t *testing.T) {
 		{"1", 1},
 		{"2", 2},
 		{"1 + 2", 3},
+		{"1 * 2", 2},
+		{"2 / 2", 1},
+		{"2 - 2", 0},
+		// {"2 == 2", true},
+		// {"2 != 2", false},
+		// {"2 > 3", false},
+		// {"2 < 3", true},
+		// {"2 <= 3", true},
+		// {"2 >= 3", false},
 	}
 	runVmTests(t, tests)
 }

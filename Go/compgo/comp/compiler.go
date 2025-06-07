@@ -17,6 +17,19 @@ func New() *Compiler {
 	}
 }
 
+var mapOpCodes = map[string]Opcode{
+	"+":  OpAdd,
+	"-":  OpSub,
+	"*":  OpMul,
+	"/":  OpDiv,
+	"==": OpEq,
+	"!=": OpNeq,
+	">":  OpGt,
+	"<":  OpLt,
+	">=": OpGte,
+	"<=": OpLte,
+}
+
 func (c *Compiler) Compile(node interp.Node) error {
 	switch n := node.(type) {
 	case *interp.Program:
@@ -41,12 +54,12 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if err != nil {
 			return err
 		}
-		switch n.Operator {
-		case "+":
-			c.emit(OpAdd)
-		default:
+
+		nop, ok := mapOpCodes[n.Operator]
+		if !ok {
 			return fmt.Errorf("unknown operator %s", n.Operator)
 		}
+		c.emit(nop)
 	case *interp.IntLiteral:
 		itg := &interp.Integer{Primitive: interp.Primitive[int]{Value: n.Value}}
 		c.constants = append(c.constants, itg)

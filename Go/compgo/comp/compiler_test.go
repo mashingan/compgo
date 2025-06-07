@@ -27,6 +27,60 @@ func TestIntegerArith(t *testing.T) {
 			Make(OpConstant, 1),
 			Make(OpPop),
 		}},
+		{"1-2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpSub),
+			Make(OpPop),
+		}},
+		{"1*2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpMul),
+			Make(OpPop),
+		}},
+		{"1/2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpDiv),
+			Make(OpPop),
+		}},
+		{"1==2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpEq),
+			Make(OpPop),
+		}},
+		{"1!=2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpNeq),
+			Make(OpPop),
+		}},
+		{"1>2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpGt),
+			Make(OpPop),
+		}},
+		{"1<2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpLt),
+			Make(OpPop),
+		}},
+		{"1>=2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpGte),
+			Make(OpPop),
+		}},
+		{"1<=2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpConstant, 1),
+			Make(OpLte),
+			Make(OpPop),
+		}},
 	}
 	runCompilerTest(t, tests)
 }

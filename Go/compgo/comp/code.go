@@ -14,6 +14,15 @@ type (
 const (
 	OpConstant Opcode = iota
 	OpAdd
+	OpSub
+	OpMul
+	OpDiv
+	OpEq
+	OpNeq
+	OpGt
+	OpLt
+	OpGte
+	OpLte
 	OpPop
 )
 
@@ -25,6 +34,15 @@ type Definition struct {
 var definitions = map[Opcode]Definition{
 	OpConstant: {"OpConstant", []int{2}},
 	OpAdd:      {"OpAdd", []int{}},
+	OpSub:      {"OpSub", []int{}},
+	OpMul:      {"OpMul", []int{}},
+	OpDiv:      {"OpDiv", []int{}},
+	OpEq:       {"OpEq", []int{}},
+	OpNeq:      {"OpNeq", []int{}},
+	OpGt:       {"OpGt", []int{}},
+	OpLt:       {"OpLt", []int{}},
+	OpGte:      {"OpGte", []int{}},
+	OpLte:      {"OpLte", []int{}},
 	OpPop:      {"OpPop", []int{}},
 }
 

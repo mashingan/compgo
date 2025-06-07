@@ -87,28 +87,81 @@ func (vm *Vm) Run() error {
 				binary.BigEndian, &idx)
 			vm.Stack.Push(vm.constants[idx])
 			ip += def.OperandWidth[0]
-		case OpAdd:
-			left, err := vm.Pop()
-			if err != nil {
+		case OpAdd, OpSub, OpMul, OpDiv:
+			fn, ok := mapInfixOps[op]
+			if !ok {
+				return fmt.Errorf("undefined infix operator: %d", op)
+			}
+			if err := fn(vm); err != nil {
 				return err
 			}
-			right, err := vm.Pop()
-			if err != nil {
-				return err
-			}
-			lint, ok := left.(*interp.Integer)
-			if !ok {
-				return fmt.Errorf("object is not integer. got=%T (%+v)", left, left)
-			}
-			rint, ok := right.(*interp.Integer)
-			if !ok {
-				return fmt.Errorf("object is not integer. got=%T (%+v)", right, right)
-			}
-			lint.Value += rint.Value
-			vm.Push(lint)
 		case OpPop:
 			vm.Pop()
 		}
 	}
 	return nil
+}
+
+func (vm *Vm) pop2() (interp.Object, interp.Object, error) {
+	left, err := vm.Pop()
+	if err != nil {
+		return nil, nil, err
+	}
+	right, err := vm.Pop()
+	if err != nil {
+		return nil, nil, err
+	}
+	return left, right, nil
+}
+
+var mapInfixOps = map[Opcode]func(vm *Vm) error{
+	OpAdd: add,
+	OpSub: sub,
+	OpMul: mul,
+	OpDiv: div,
+}
+
+func arith(vm *Vm, fop func(vm *Vm, left, right *interp.Integer)) error {
+	lobj, robj, err := vm.pop2()
+	if err != nil {
+		return err
+	}
+	lint, ok := lobj.(*interp.Integer)
+	if !ok {
+		return fmt.Errorf("object is not integer. got=%T (%+v)", lobj, lobj)
+	}
+	rint, ok := robj.(*interp.Integer)
+	if !ok {
+		return fmt.Errorf("object is not integer. got=%T (%+v)", robj, robj)
+	}
+	fop(vm, lint, rint)
+	return nil
+}
+
+func add(vm *Vm) error {
+	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
+		left.Value += right.Value
+		vm.Push(left)
+	})
+}
+
+func sub(vm *Vm) error {
+	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
+		left.Value -= right.Value
+		vm.Push(left)
+	})
+}
+
+func mul(vm *Vm) error {
+	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
+		left.Value *= right.Value
+		vm.Push(left)
+	})
+}
+
+func div(vm *Vm) error {
+	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
+		left.Value /= right.Value
+		vm.Push(left)
+	})
 }
