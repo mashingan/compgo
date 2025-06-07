@@ -2,6 +2,7 @@ package comp
 
 import (
 	"compgo/interp"
+	"fmt"
 )
 
 type Compiler struct {
@@ -38,6 +39,12 @@ func (c *Compiler) Compile(node interp.Node) error {
 		err = c.Compile(n.Right)
 		if err != nil {
 			return err
+		}
+		switch n.Operator {
+		case "+":
+			c.emit(OpAdd)
+		default:
+			return fmt.Errorf("unknown operator %s", n.Operator)
 		}
 	case *interp.IntLiteral:
 		itg := &interp.Integer{Primitive: interp.Primitive[int]{Value: n.Value}}

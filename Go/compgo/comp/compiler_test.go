@@ -18,6 +18,7 @@ func TestIntegerArith(t *testing.T) {
 		{"1+2", []any{1, 2}, []Instructions{
 			Make(OpConstant, 0),
 			Make(OpConstant, 1),
+			Make(OpAdd),
 		}},
 	}
 	runCompilerTest(t, tests)
@@ -94,6 +95,7 @@ func testIntegerObject(n int, o interp.Object) error {
 
 func TestInstructionsString(t *testing.T) {
 	inst := []Instructions{
+		Make(OpAdd),
 		Make(OpConstant, 1),
 		Make(OpConstant, 2),
 		Make(OpConstant, 65535),
@@ -102,9 +104,10 @@ func TestInstructionsString(t *testing.T) {
 	t.Log("2:", Make(OpConstant, 2))
 	t.Log("3:", Make(OpConstant, 65535))
 	expected := strings.TrimSpace(`
-0000 OpConstant 1
-0003 OpConstant 2
-0006 OpConstant 65535
+0000 OpAdd
+0001 OpConstant 1
+0004 OpConstant 2
+0007 OpConstant 65535
 `)
 	insts := Instructions{}
 	for _, ins := range inst {

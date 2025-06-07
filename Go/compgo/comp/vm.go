@@ -61,6 +61,25 @@ func (vm *Vm) Run() error {
 				binary.BigEndian, &idx)
 			vm.Stack.Push(vm.constants[idx])
 			ip += def.OperandWidth[0]
+		case OpAdd:
+			left, err := vm.Stack.Pop()
+			if err != nil {
+				return err
+			}
+			right, err := vm.Stack.Pop()
+			if err != nil {
+				return err
+			}
+			lint, ok := left.(*interp.Integer)
+			if !ok {
+				return fmt.Errorf("object is not integer. got=%T (%+v)", left, left)
+			}
+			rint, ok := right.(*interp.Integer)
+			if !ok {
+				return fmt.Errorf("object is not integer. got=%T (%+v)", right, right)
+			}
+			lint.Value += rint.Value
+			vm.Push(lint)
 		}
 	}
 	return nil
