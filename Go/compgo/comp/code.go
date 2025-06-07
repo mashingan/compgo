@@ -3,12 +3,41 @@ package comp
 import (
 	"encoding/binary"
 	"fmt"
+	"strings"
 )
 
 type (
 	Instructions []byte
 	Opcode       byte
 )
+
+func (i Instructions) String() string {
+	var (
+		sb   strings.Builder
+		addr int
+	)
+	for addr < len(i) {
+		sb.WriteString(fmt.Sprintf("%04d ", addr))
+		def, ok := definitions[Opcode(i[addr])]
+		addr++
+		if !ok {
+			sb.WriteByte('\n')
+			continue
+		}
+		sb.WriteString(def.Name)
+		for _, lond := range def.OperandWidth {
+			var val uint16 = 0
+			n, err := binary.Decode(i[addr:addr+lond], binary.BigEndian, &val)
+			if err != nil {
+				fmt.Printf("n byte written: %d, error: %s", n, err)
+			}
+			addr += lond
+			sb.WriteString(fmt.Sprintf(" %d", val))
+		}
+		sb.WriteByte('\n')
+	}
+	return strings.TrimSpace(sb.String())
+}
 
 const (
 	OpConstant Opcode = iota
