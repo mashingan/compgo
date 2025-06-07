@@ -9,6 +9,7 @@ type Compiler struct {
 	Instructions
 	constants                            []interp.Object
 	lastInstruction, previousInstruction EmittedInstruction
+	symbolTable                          *SymbolTable
 }
 
 type EmittedInstruction struct {
@@ -20,6 +21,7 @@ func New() *Compiler {
 	return &Compiler{
 		Instructions: Instructions{},
 		constants:    []interp.Object{},
+		symbolTable:  NewSymbolTable(),
 	}
 }
 
@@ -103,7 +105,14 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if err := c.Compile(n.Value); err != nil {
 			return err
 		}
-		c.emit(OpSetGlobal) // TODO: Fix operand address
+		syms := c.symbolTable.Define(n.Name.Value)
+		c.emit(OpSetGlobal, syms.Index)
+	case *interp.Identifier:
+		sym, ok := c.symbolTable.Resolve(n.Value)
+		if !ok {
+			return fmt.Errorf("ident %s is not resolvable", n.Value)
+		}
+		c.emit(OpGetGlobal, sym.Index)
 	}
 	return nil
 }
