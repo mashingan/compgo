@@ -9,7 +9,10 @@ import (
 	"runtime"
 )
 
-const stackSize = 2048
+const (
+	stackSize  = 2048
+	globalSize = 65536
+)
 
 type Vm struct {
 	constants []interp.Object
@@ -17,6 +20,7 @@ type Vm struct {
 	Stack[interp.Object]
 	sp      int
 	lastPop interp.Object
+	globals []interp.Object
 }
 
 func NewVm(b *Bytecode) *Vm {
@@ -25,6 +29,7 @@ func NewVm(b *Bytecode) *Vm {
 		constants:    b.Constants,
 		Stack:        make(Stack[interp.Object], 0, stackSize),
 		sp:           0,
+		globals:      make([]interp.Object, globalSize),
 	}
 }
 
@@ -156,6 +161,22 @@ func (vm *Vm) Run() error {
 			}
 		case OpNull:
 			vm.Push(interp.NullObject)
+		case OpSetGlobal:
+			idx := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &idx)
+			ip += 2
+			glb, err := vm.Pop()
+			if err != nil {
+				inspectEmptyStack(err)
+				return err
+			}
+			vm.globals[idx] = glb
+		case OpGetGlobal:
+			idx := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &idx)
+			ip += 2
+			glb := vm.globals[idx]
+			vm.Push(glb)
 		}
 	}
 	return nil
@@ -205,29 +226,37 @@ func arith(vm *Vm, fop func(vm *Vm, left, right *interp.Integer)) error {
 
 func add(vm *Vm) error {
 	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
-		left.Value += right.Value
-		vm.Push(left)
+		newv := &interp.Integer{Primitive: interp.Primitive[int]{
+			Value: left.Value + right.Value,
+		}}
+		vm.Push(newv)
 	})
 }
 
 func sub(vm *Vm) error {
 	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
-		left.Value -= right.Value
-		vm.Push(left)
+		newv := &interp.Integer{Primitive: interp.Primitive[int]{
+			Value: left.Value - right.Value,
+		}}
+		vm.Push(newv)
 	})
 }
 
 func mul(vm *Vm) error {
 	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
-		left.Value *= right.Value
-		vm.Push(left)
+		newv := &interp.Integer{Primitive: interp.Primitive[int]{
+			Value: left.Value * right.Value,
+		}}
+		vm.Push(newv)
 	})
 }
 
 func div(vm *Vm) error {
 	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
-		left.Value /= right.Value
-		vm.Push(left)
+		newv := &interp.Integer{Primitive: interp.Primitive[int]{
+			Value: left.Value / right.Value,
+		}}
+		vm.Push(newv)
 	})
 }
 
