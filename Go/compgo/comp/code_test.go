@@ -24,6 +24,8 @@ func TestMake(t *testing.T) {
 		{OpFalse, []int{}, []byte{byte(OpFalse)}},
 		{OpBang, []int{}, []byte{byte(OpBang)}},
 		{OpMinus, []int{}, []byte{byte(OpMinus)}},
+		{OpJump, []int{12}, []byte{byte(OpJump), 0, 12}},
+		{OpJumpIfFalsy, []int{12}, []byte{byte(OpJumpIfFalsy), 0, 12}},
 	}
 	for _, tt := range tests {
 		inst := Make(tt.op, tt.operands...)

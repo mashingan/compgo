@@ -119,7 +119,7 @@ func parse(input string) *interp.Program {
 	return p.ParseProgram()
 }
 
-func testInstructions(expected []Instructions, got Instructions) error {
+func testInstructions(t *testing.T, expected []Instructions, got Instructions) error {
 	exp := Instructions{}
 	for _, ex := range expected {
 		exp = append(exp, ex...)
@@ -129,6 +129,8 @@ func testInstructions(expected []Instructions, got Instructions) error {
 	}
 	for i, b := range exp {
 		if b != got[i] {
+			t.Logf("expected: %q\n", exp)
+			t.Logf("got: %q", got)
 			return fmt.Errorf("wrong byte at instruction byte %d. got=%d want=%d",
 				i, b, got[i])
 		}
@@ -146,7 +148,7 @@ func runCompilerTest(t *testing.T, ct []compilerTestCase) {
 			t.Fatalf("compiler error: %s", err)
 		}
 		bc := compiler.Bytecode()
-		err = testInstructions(tt.expectedInstructions, bc.Instructions)
+		err = testInstructions(t, tt.expectedInstructions, bc.Instructions)
 		if err != nil {
 			t.Fatalf("test instruction failed: %s", err)
 		}
@@ -208,4 +210,28 @@ func TestInstructionsString(t *testing.T) {
 	if insts.String() != expected {
 		t.Errorf("instruction wrong format.\nwant=%q\ngot=%q", expected, insts.String())
 	}
+}
+
+func TestConditionalsCompile(t *testing.T) {
+	tests := []compilerTestCase{
+		{`if (true) { 10 }; 3333`, []any{10, 3333}, []Instructions{
+			Make(OpTrue),           // 0000
+			Make(OpJumpIfFalsy, 7), // 0001
+			Make(OpConstant, 0),    // 0004
+			Make(OpPop),            // 0007
+			Make(OpConstant, 1),    // 0008
+			Make(OpPop),            // 00011
+		}},
+		{`if (true) { 10 } else { 20 }; 3333`, []any{10, 3333}, []Instructions{
+			Make(OpTrue),            // 0000
+			Make(OpJumpIfFalsy, 10), // 0001
+			Make(OpConstant, 0),     // 0004
+			Make(OpJump, 13),        // 0007
+			Make(OpConstant, 1),     // 0010
+			Make(OpPop),             // 00013
+			Make(OpConstant, 2),     // 00014
+			Make(OpPop),             // 00017
+		}},
+	}
+	runCompilerTest(t, tests)
 }

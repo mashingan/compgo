@@ -29,6 +29,8 @@ const (
 	OpPop
 	OpBang
 	OpMinus
+	OpJumpIfFalsy
+	OpJump
 )
 
 type Definition struct {
@@ -37,22 +39,24 @@ type Definition struct {
 }
 
 var definitions = map[Opcode]Definition{
-	OpConstant: {"OpConstant", []int{2}},
-	OpAdd:      {"OpAdd", []int{}},
-	OpSub:      {"OpSub", []int{}},
-	OpMul:      {"OpMul", []int{}},
-	OpDiv:      {"OpDiv", []int{}},
-	OpEq:       {"OpEq", []int{}},
-	OpNeq:      {"OpNeq", []int{}},
-	OpGt:       {"OpGt", []int{}},
-	OpLt:       {"OpLt", []int{}},
-	OpGte:      {"OpGte", []int{}},
-	OpLte:      {"OpLte", []int{}},
-	OpPop:      {"OpPop", []int{}},
-	OpTrue:     {"OpTrue", []int{}},
-	OpFalse:    {"OpFalse", []int{}},
-	OpBang:     {"OpBang", []int{}},
-	OpMinus:    {"OpMinus", []int{}},
+	OpConstant:    {"OpConstant", []int{2}},
+	OpAdd:         {"OpAdd", []int{}},
+	OpSub:         {"OpSub", []int{}},
+	OpMul:         {"OpMul", []int{}},
+	OpDiv:         {"OpDiv", []int{}},
+	OpEq:          {"OpEq", []int{}},
+	OpNeq:         {"OpNeq", []int{}},
+	OpGt:          {"OpGt", []int{}},
+	OpLt:          {"OpLt", []int{}},
+	OpGte:         {"OpGte", []int{}},
+	OpLte:         {"OpLte", []int{}},
+	OpPop:         {"OpPop", []int{}},
+	OpTrue:        {"OpTrue", []int{}},
+	OpFalse:       {"OpFalse", []int{}},
+	OpBang:        {"OpBang", []int{}},
+	OpMinus:       {"OpMinus", []int{}},
+	OpJump:        {"OpJump", []int{2}},
+	OpJumpIfFalsy: {"OpJumpIfFalsy", []int{2}},
 }
 
 func (i Instructions) String() string {
