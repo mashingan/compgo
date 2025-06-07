@@ -2,6 +2,7 @@ package comp
 
 import (
 	"compgo/interp"
+	"fmt"
 	"testing"
 )
 
@@ -37,7 +38,23 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 		if err != nil {
 			t.Errorf("integer object test fail: %s", err)
 		}
+	case bool:
+		err := testBooleanObject(exp, actual)
+		if err != nil {
+			t.Errorf("%s", err)
+		}
 	}
+}
+
+func testBooleanObject(expected bool, actual interp.Object) error {
+	b, ok := actual.(*interp.Boolean)
+	if !ok {
+		return fmt.Errorf("object is not boolean. got=%T (%+v)", actual, actual)
+	}
+	if b.Value != expected {
+		return fmt.Errorf("object is wrong value. got=%t want=%t", b.Value, expected)
+	}
+	return nil
 }
 
 func TestIntegerArithVm(t *testing.T) {
@@ -47,13 +64,13 @@ func TestIntegerArithVm(t *testing.T) {
 		{"1 + 2", 3},
 		{"1 * 2", 2},
 		{"2 / 2", 1},
-		{"2 - 2", 0},
-		// {"2 == 2", true},
-		// {"2 != 2", false},
-		// {"2 > 3", false},
-		// {"2 < 3", true},
-		// {"2 <= 3", true},
-		// {"2 >= 3", false},
+		{"3 - 2", 1},
+		{"2 == 2", true},
+		{"2 != 2", false},
+		{"2 > 3", false},
+		{"2 < 3", true},
+		{"2 <= 3", true},
+		{"2 >= 3", false},
 	}
 	runVmTests(t, tests)
 }

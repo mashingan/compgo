@@ -87,7 +87,8 @@ func (vm *Vm) Run() error {
 				binary.BigEndian, &idx)
 			vm.Stack.Push(vm.constants[idx])
 			ip += def.OperandWidth[0]
-		case OpAdd, OpSub, OpMul, OpDiv:
+		case OpAdd, OpSub, OpMul, OpDiv, OpEq, OpNeq,
+			OpLt, OpLte, OpGt, OpGte:
 			fn, ok := mapInfixOps[op]
 			if !ok {
 				return fmt.Errorf("undefined infix operator: %d", op)
@@ -103,11 +104,11 @@ func (vm *Vm) Run() error {
 }
 
 func (vm *Vm) pop2() (interp.Object, interp.Object, error) {
-	left, err := vm.Pop()
+	right, err := vm.Pop()
 	if err != nil {
 		return nil, nil, err
 	}
-	right, err := vm.Pop()
+	left, err := vm.Pop()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -119,6 +120,12 @@ var mapInfixOps = map[Opcode]func(vm *Vm) error{
 	OpSub: sub,
 	OpMul: mul,
 	OpDiv: div,
+	OpEq:  eqObj,
+	OpNeq: neqObj,
+	OpGt:  gtObj,
+	OpLt:  ltObj,
+	OpGte: gteObj,
+	OpLte: lteObj,
 }
 
 func arith(vm *Vm, fop func(vm *Vm, left, right *interp.Integer)) error {
@@ -163,5 +170,61 @@ func div(vm *Vm) error {
 	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
 		left.Value /= right.Value
 		vm.Push(left)
+	})
+}
+
+func eqlityObj(vm *Vm, test func(l, r *interp.Integer) bool) error {
+	left, right, err := vm.pop2()
+	if err != nil {
+		return err
+	}
+	if left.Type() != right.Type() {
+		return fmt.Errorf("not the same object type")
+	}
+	switch lobj := left.(type) {
+	case *interp.Integer:
+		robj := right.(*interp.Integer)
+		if test(lobj, robj) {
+			vm.Push(interp.TrueObject)
+			return nil
+		}
+		vm.Push(interp.FalseObject)
+	}
+	return nil
+}
+
+func eqObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value == r.Value
+	})
+}
+
+func neqObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value != r.Value
+	})
+}
+
+func gtObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value > r.Value
+	})
+}
+
+func ltObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value < r.Value
+	})
+}
+
+func gteObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value >= r.Value
+	})
+}
+
+func lteObj(vm *Vm) error {
+	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+		return l.Value <= r.Value
 	})
 }
