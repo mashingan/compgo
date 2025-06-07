@@ -52,12 +52,8 @@ func main() {
 			continue
 		}
 
-		stacktop := mcn.StackTop()
+		stacktop := mcn.LastPop()
 		fmt.Println(stacktop.Inspect())
-		// evl := interp.Eval(mobj, env)
-		// if evl != nil {
-		// 	fmt.Println(evl.Inspect())
-		// }
 	}
 }
 

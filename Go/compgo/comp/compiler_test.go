@@ -19,6 +19,13 @@ func TestIntegerArith(t *testing.T) {
 			Make(OpConstant, 0),
 			Make(OpConstant, 1),
 			Make(OpAdd),
+			Make(OpPop),
+		}},
+		{"1;2", []any{1, 2}, []Instructions{
+			Make(OpConstant, 0),
+			Make(OpPop),
+			Make(OpConstant, 1),
+			Make(OpPop),
 		}},
 	}
 	runCompilerTest(t, tests)
@@ -65,21 +72,21 @@ func runCompilerTest(t *testing.T, ct []compilerTestCase) {
 
 }
 
-func testConstants(t testing.T, expected []any, actual []interp.Object) error {
-	if len(expected) != len(actual) {
-		return fmt.Errorf("wrong number of constants. got=%d want=%d", len(actual), len(expected))
-	}
-	for i, constant := range expected {
-		switch constant := constant.(type) {
-		case int:
-			err := testIntegerObject(constant, actual[i])
-			if err != nil {
-				return fmt.Errorf("constant %d - testIntegerObject failed: %s", i, err)
-			}
-		}
-	}
-	return nil
-}
+// func testConstants(t testing.T, expected []any, actual []interp.Object) error {
+// 	if len(expected) != len(actual) {
+// 		return fmt.Errorf("wrong number of constants. got=%d want=%d", len(actual), len(expected))
+// 	}
+// 	for i, constant := range expected {
+// 		switch constant := constant.(type) {
+// 		case int:
+// 			err := testIntegerObject(constant, actual[i])
+// 			if err != nil {
+// 				return fmt.Errorf("constant %d - testIntegerObject failed: %s", i, err)
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
 
 func testIntegerObject(n int, o interp.Object) error {
 	i, ok := o.(*interp.Integer)
@@ -99,6 +106,7 @@ func TestInstructionsString(t *testing.T) {
 		Make(OpConstant, 1),
 		Make(OpConstant, 2),
 		Make(OpConstant, 65535),
+		Make(OpPop),
 	}
 	t.Log("1:", Make(OpConstant, 1))
 	t.Log("2:", Make(OpConstant, 2))
@@ -108,6 +116,7 @@ func TestInstructionsString(t *testing.T) {
 0001 OpConstant 1
 0004 OpConstant 2
 0007 OpConstant 65535
+0010 OpPop
 `)
 	insts := Instructions{}
 	for _, ins := range inst {

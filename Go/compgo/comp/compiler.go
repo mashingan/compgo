@@ -31,6 +31,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if err != nil {
 			return err
 		}
+		c.emit(OpPop)
 	case *interp.InfixExpression:
 		err := c.Compile(n.Left)
 		if err != nil {
