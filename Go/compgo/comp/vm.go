@@ -98,6 +98,10 @@ func (vm *Vm) Run() error {
 			}
 		case OpPop:
 			vm.Pop()
+		case OpTrue:
+			vm.Push(interp.TrueObject)
+		case OpFalse:
+			vm.Push(interp.FalseObject)
 		}
 	}
 	return nil
@@ -173,13 +177,65 @@ func div(vm *Vm) error {
 	})
 }
 
-func eqlityObj(vm *Vm, test func(l, r *interp.Integer) bool) error {
+func comparableObj(vm *Vm, test func(l, r interp.Object) bool) error {
 	left, right, err := vm.pop2()
 	if err != nil {
 		return err
 	}
 	if left.Type() != right.Type() {
-		return fmt.Errorf("not the same object type")
+		return fmt.Errorf("not the same object type, left=%q and right=%q",
+			left.Inspect(), right.Inspect())
+	}
+	if test(left, right) {
+		vm.Push(interp.TrueObject)
+	} else {
+		vm.Push(interp.FalseObject)
+	}
+	return nil
+}
+
+func eqObj(vm *Vm) error {
+	return comparableObj(vm, func(l, r interp.Object) bool {
+		switch left := l.(type) {
+		case *interp.Integer:
+			right := r.(*interp.Integer)
+			return left.Value == right.Value
+		case *interp.Boolean:
+			right := r.(*interp.Boolean)
+			return left.Value == right.Value
+		}
+		return false
+	})
+}
+
+func neqObj(vm *Vm) error {
+	if err := eqObj(vm); err != nil {
+		return err
+	}
+	lastBool, err := vm.Pop()
+	if err != nil {
+		return err
+	}
+	lb, ok := lastBool.(*interp.Boolean)
+	if !ok {
+		return fmt.Errorf("not a boolean value")
+	}
+	if lb.Value {
+		vm.Push(interp.FalseObject)
+	} else {
+		vm.Push(interp.TrueObject)
+	}
+	return nil
+}
+
+func orderableObj(vm *Vm, test func(l, r *interp.Integer) bool) error {
+	left, right, err := vm.pop2()
+	if err != nil {
+		return err
+	}
+	if left.Type() != right.Type() {
+		return fmt.Errorf("not the same object type, left=%q and right=%q",
+			left.Inspect(), right.Inspect())
 	}
 	switch lobj := left.(type) {
 	case *interp.Integer:
@@ -193,38 +249,38 @@ func eqlityObj(vm *Vm, test func(l, r *interp.Integer) bool) error {
 	return nil
 }
 
-func eqObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
-		return l.Value == r.Value
-	})
-}
+// func eqObj(vm *Vm) error {
+// 	return orderableObj(vm, func(l, r *interp.Integer) bool {
+// 		return l.Value == r.Value
+// 	})
+// }
 
-func neqObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
-		return l.Value != r.Value
-	})
-}
+// func neqObj(vm *Vm) error {
+// 	return orderableObj(vm, func(l, r *interp.Integer) bool {
+// 		return l.Value != r.Value
+// 	})
+// }
 
 func gtObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value > r.Value
 	})
 }
 
 func ltObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value < r.Value
 	})
 }
 
 func gteObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value >= r.Value
 	})
 }
 
 func lteObj(vm *Vm) error {
-	return eqlityObj(vm, func(l, r *interp.Integer) bool {
+	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value <= r.Value
 	})
 }

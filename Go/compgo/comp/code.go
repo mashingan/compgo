@@ -17,6 +17,9 @@ const (
 	OpSub
 	OpMul
 	OpDiv
+	OpNot
+	OpTrue
+	OpFalse
 	OpEq
 	OpNeq
 	OpGt
@@ -44,6 +47,9 @@ var definitions = map[Opcode]Definition{
 	OpGte:      {"OpGte", []int{}},
 	OpLte:      {"OpLte", []int{}},
 	OpPop:      {"OpPop", []int{}},
+	OpNot:      {"OpNot", []int{}},
+	OpTrue:     {"OpTrue", []int{}},
+	OpFalse:    {"OpFalse", []int{}},
 }
 
 func (i Instructions) String() string {

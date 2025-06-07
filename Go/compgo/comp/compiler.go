@@ -64,6 +64,12 @@ func (c *Compiler) Compile(node interp.Node) error {
 		itg := &interp.Integer{Primitive: interp.Primitive[int]{Value: n.Value}}
 		c.constants = append(c.constants, itg)
 		c.emit(OpConstant, len(c.constants)-1)
+	case *interp.BooleanLiteral:
+		if n.Value {
+			c.emit(OpTrue)
+		} else {
+			c.emit(OpFalse)
+		}
 	}
 	return nil
 }

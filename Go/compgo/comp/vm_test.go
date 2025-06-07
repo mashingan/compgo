@@ -65,12 +65,23 @@ func TestIntegerArithVm(t *testing.T) {
 		{"1 * 2", 2},
 		{"2 / 2", 1},
 		{"3 - 2", 1},
+	}
+	runVmTests(t, tests)
+}
+
+func TestBooleanVm(t *testing.T) {
+	tests := []vmTestCase{
+		{"true", true},
+		{"false", false},
+		{"true == true", true},
+		{"false == false", true},
 		{"2 == 2", true},
 		{"2 != 2", false},
 		{"2 > 3", false},
 		{"2 < 3", true},
 		{"2 <= 3", true},
 		{"2 >= 3", false},
+		{"(1 < 2) == true", true},
 	}
 	runVmTests(t, tests)
 }

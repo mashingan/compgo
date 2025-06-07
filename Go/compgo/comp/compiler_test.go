@@ -81,6 +81,14 @@ func TestIntegerArith(t *testing.T) {
 			Make(OpLte),
 			Make(OpPop),
 		}},
+		{"true", []any{}, []Instructions{
+			Make(OpTrue),
+			Make(OpPop),
+		}},
+		{"false", []any{}, []Instructions{
+			Make(OpFalse),
+			Make(OpPop),
+		}},
 	}
 	runCompilerTest(t, tests)
 }
