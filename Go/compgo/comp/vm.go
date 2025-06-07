@@ -3,7 +3,10 @@ package comp
 import (
 	"compgo/interp"
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"path"
+	"runtime"
 )
 
 const stackSize = 2048
@@ -76,6 +79,15 @@ func (s *Stack[T]) Pop() (T, error) {
 
 func (vm *Vm) Run() error {
 	ip := 0
+	inspectEmptyStack := func(err error) {
+		pc, file, lineno, _ := runtime.Caller(1)
+		funcname := runtime.FuncForPC(pc).Name()
+		fname := path.Base(file)
+		if errors.Is(err, ErrEmptyStack) {
+			fmt.Printf("%s#%s:%d inst:\n%s\n",
+				fname, funcname, lineno, vm.Instructions)
+		}
+	}
 	for ip < len(vm.Instructions) {
 		op := Opcode(vm.Instructions[ip])
 		ip++
@@ -94,6 +106,7 @@ func (vm *Vm) Run() error {
 				return fmt.Errorf("undefined infix operator: %d", op)
 			}
 			if err := fn(vm); err != nil {
+				inspectEmptyStack(err)
 				return err
 			}
 		case OpPop:
@@ -105,6 +118,7 @@ func (vm *Vm) Run() error {
 		case OpMinus:
 			lastval, err := vm.Pop()
 			if err != nil {
+				inspectEmptyStack(err)
 				return err
 			}
 			i, ok := lastval.(*interp.Integer)
@@ -117,10 +131,28 @@ func (vm *Vm) Run() error {
 		case OpBang:
 			lastitem, err := vm.Pop()
 			if err != nil {
+				inspectEmptyStack(err)
 				return err
 			}
 			if err := notObj(vm, lastitem); err != nil {
+				inspectEmptyStack(err)
 				return err
+			}
+		case OpJump:
+			addr := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &addr)
+			ip = int(addr)
+		case OpJumpIfFalsy:
+			addr := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &addr)
+			ip += 2
+			cond, err := vm.Pop()
+			if err != nil {
+				inspectEmptyStack(err)
+				return err
+			}
+			if !isTruthy(cond) {
+				ip = int(addr)
 			}
 		}
 	}
@@ -282,18 +314,6 @@ func orderableObj(vm *Vm, test func(l, r *interp.Integer) bool) error {
 	return nil
 }
 
-// func eqObj(vm *Vm) error {
-// 	return orderableObj(vm, func(l, r *interp.Integer) bool {
-// 		return l.Value == r.Value
-// 	})
-// }
-
-// func neqObj(vm *Vm) error {
-// 	return orderableObj(vm, func(l, r *interp.Integer) bool {
-// 		return l.Value != r.Value
-// 	})
-// }
-
 func gtObj(vm *Vm) error {
 	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value > r.Value
@@ -316,4 +336,17 @@ func lteObj(vm *Vm) error {
 	return orderableObj(vm, func(l, r *interp.Integer) bool {
 		return l.Value <= r.Value
 	})
+}
+
+func isTruthy(o interp.Object) bool {
+	switch b := o.(type) {
+	case *interp.Boolean:
+		return b.Value
+	case *interp.Integer:
+		return b.Value != 0
+	case *interp.Null:
+		return false
+	default:
+		return true
+	}
 }
