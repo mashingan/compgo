@@ -11,6 +11,21 @@ type (
 	Opcode       byte
 )
 
+const (
+	OpConstant Opcode = iota
+	OpAdd
+)
+
+type Definition struct {
+	Name         string
+	OperandWidth []int
+}
+
+var definitions = map[Opcode]Definition{
+	OpConstant: {"OpConstant", []int{2}},
+	OpAdd:      {"OpAdd", []int{}},
+}
+
 func (i Instructions) String() string {
 	var (
 		sb   strings.Builder
@@ -37,19 +52,6 @@ func (i Instructions) String() string {
 		sb.WriteByte('\n')
 	}
 	return strings.TrimSpace(sb.String())
-}
-
-const (
-	OpConstant Opcode = iota
-)
-
-type Definition struct {
-	Name         string
-	OperandWidth []int
-}
-
-var definitions = map[Opcode]Definition{
-	OpConstant: {"OpConstant", []int{2}},
 }
 
 func Lookup(op byte) (Definition, error) {
