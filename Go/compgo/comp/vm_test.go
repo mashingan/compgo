@@ -47,6 +47,11 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 		if actual != interp.NullObject {
 			t.Errorf("object is not null. got=%T (%+v)", actual, actual)
 		}
+	case string:
+		err := testStringObject(exp, actual)
+		if err != nil {
+			t.Errorf("%s", err)
+		}
 	}
 }
 
@@ -57,6 +62,17 @@ func testBooleanObject(expected bool, actual interp.Object) error {
 	}
 	if b.Value != expected {
 		return fmt.Errorf("object is wrong value. got=%t want=%t", b.Value, expected)
+	}
+	return nil
+}
+
+func testStringObject(expected string, actual interp.Object) error {
+	s, ok := actual.(*interp.String)
+	if !ok {
+		return fmt.Errorf("object is not string. got=%T (%+v)", actual, actual)
+	}
+	if s.Value != expected {
+		return fmt.Errorf("object is wrong value. got=%s want=%s", s.Value, expected)
 	}
 	return nil
 }
@@ -121,6 +137,15 @@ func TestGlobalLetStatementsVm(t *testing.T) {
 		{"let one = 1; one + one;", 2},
 		{"let one = 1; let two = 2; one + two;", 3},
 		{"let one = 1; let two = one + one; one + two", 3},
+	}
+	runVmTests(t, tests)
+}
+
+func TestStringVm(t *testing.T) {
+	tests := []vmTestCase{
+		{`let monkey = "monkey"; monkey;`, "monkey"},
+		{`let i = "異"; let sekai = "世界"; i + sekai;`, "異世界"},
+		{`let i = "異"; let sekai = "世界"; let isekai = i + sekai; isekai`, "異世界"},
 	}
 	runVmTests(t, tests)
 }

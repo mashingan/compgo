@@ -233,12 +233,33 @@ func arith(vm *Vm, fop func(vm *Vm, left, right *interp.Integer)) error {
 }
 
 func add(vm *Vm) error {
-	return arith(vm, func(vm *Vm, left, right *interp.Integer) {
+	lobj, robj, err := vm.pop2()
+	if err != nil {
+		return err
+	}
+	switch lint := lobj.(type) {
+	case *interp.Integer:
+		rint, ok := robj.(*interp.Integer)
+		if !ok {
+			return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
+		}
 		newv := &interp.Integer{Primitive: interp.Primitive[int]{
-			Value: left.Value + right.Value,
+			Value: lint.Value + rint.Value,
 		}}
 		vm.Push(newv)
-	})
+	case *interp.String:
+		rstr, ok := robj.(*interp.String)
+		if !ok {
+			return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
+		}
+		newv := &interp.String{Primitive: interp.Primitive[string]{
+			Value: lint.Value + rstr.Value,
+		}}
+		vm.Push(newv)
+	default:
+		return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
+	}
+	return nil
 }
 
 func sub(vm *Vm) error {

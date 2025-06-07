@@ -292,3 +292,27 @@ func TestGlobalLetStatements(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestStringExpression(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `"monkey"`,
+			expectedConstants: []any{"monkey"},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `"異" + "世界"`,
+			expectedConstants: []any{"異", "世界"},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpAdd),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
