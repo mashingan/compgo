@@ -86,7 +86,7 @@ func testIntegerObject(n int, o interp.Object) error {
 		return fmt.Errorf("object is not integer. got=%T (%+v)", o, o)
 	}
 	if i.Value != n {
-		return fmt.Errorf("object wrong integer. got=%d want=%d", i.Value, n)
+		return fmt.Errorf("object wrong value. got=%d want=%d", i.Value, n)
 	}
 
 	return nil
