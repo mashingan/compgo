@@ -11,7 +11,7 @@ import (
 
 const (
 	stackSize  = 2048
-	globalSize = 65536
+	GlobalSize = 65536
 )
 
 type Vm struct {
@@ -29,8 +29,16 @@ func NewVm(b *Bytecode) *Vm {
 		constants:    b.Constants,
 		Stack:        make(Stack[interp.Object], 0, stackSize),
 		sp:           0,
-		globals:      make([]interp.Object, globalSize),
+		globals:      make([]interp.Object, GlobalSize),
 	}
+}
+
+func (vm *Vm) SetConstants(cnts []interp.Object) {
+	vm.constants = cnts
+}
+
+func (vm *Vm) SetGlobals(globs []interp.Object) {
+	vm.globals = globs
 }
 
 func (vm *Vm) StackTop() interp.Object {

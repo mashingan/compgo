@@ -24,6 +24,13 @@ func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	// env := interp.NewEnvironment()
 	menv := interp.NewEnvironment()
+	cmpiler := comp.New()
+	var mcn *comp.Vm
+	globs := make([]interp.Object, comp.GlobalSize)
+	constants := []interp.Object{}
+	symbolsTable := comp.NewSymbolTable()
+	cmpiler.SetSymbolTable(symbolsTable)
+	cmpiler.SetConstants(constants)
 	for {
 		fmt.Print(Prompt)
 		scn := scanner.Scan()
@@ -39,13 +46,22 @@ func main() {
 		}
 		interp.DefineMacros(prg, menv)
 		mobj := interp.ExpandMacros(prg, menv)
-		cmpiler := comp.New()
+		cmpiler.Instructions = comp.Instructions{}
 		err := cmpiler.Compile(mobj)
 		if err != nil {
 			fmt.Printf("Compilation failed:\n%s\n", err)
 			continue
 		}
-		mcn := comp.NewVm(cmpiler.Bytecode())
+		if mcn == nil {
+			mcn = comp.NewVm(cmpiler.Bytecode())
+			mcn.SetGlobals(globs)
+		} else {
+			b := cmpiler.Bytecode()
+			mcn.Instructions = b.Instructions
+			mcn.Stack = []interp.Object{}
+			mcn.SetConstants(b.Constants)
+			mcn.SetGlobals(globs)
+		}
 		err = mcn.Run()
 		if err != nil {
 			fmt.Printf("Executing bytecode failed:\n%s\n", err)

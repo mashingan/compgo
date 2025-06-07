@@ -25,6 +25,14 @@ func New() *Compiler {
 	}
 }
 
+func (c *Compiler) SetConstants(cnts []interp.Object) {
+	c.constants = cnts
+}
+
+func (c *Compiler) SetSymbolTable(st *SymbolTable) {
+	c.symbolTable = st
+}
+
 var mapOpCodes = map[string]Opcode{
 	"+":  OpAdd,
 	"-":  OpSub,
