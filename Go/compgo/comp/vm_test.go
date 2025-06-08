@@ -280,3 +280,13 @@ func TestFunctionVm_call(t *testing.T) {
 	}
 	runVmTests(t, tests)
 }
+
+func TestFunctionVm_firstClass(t *testing.T) {
+	tests := []vmTestCase{
+		{`
+		let retone = fn() { 1 }; 
+		let ret2one = fn() { retone; };
+		ret2one()()`, 1},
+	}
+	runVmTests(t, tests)
+}
