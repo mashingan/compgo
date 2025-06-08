@@ -13,25 +13,31 @@ import (
 const (
 	stackSize  = 2048
 	GlobalSize = 65536
+	MaxFrames  = 1024
 )
 
 type Vm struct {
 	constants []interp.Object
-	Instructions
 	Stack[interp.Object]
-	sp      int
-	lastPop interp.Object
-	globals []interp.Object
+	sp       int
+	lastPop  interp.Object
+	globals  []interp.Object
+	frames   []*Frame
+	frameIdx int
 }
 
 func NewVm(b *Bytecode) *Vm {
-	return &Vm{
-		Instructions: b.Instructions,
-		constants:    b.Constants,
-		Stack:        make(Stack[interp.Object], 0, stackSize),
-		sp:           0,
-		globals:      make([]interp.Object, GlobalSize),
+	vm := &Vm{
+		constants: b.Constants,
+		Stack:     make(Stack[interp.Object], 0, stackSize),
+		sp:        0,
+		globals:   make([]interp.Object, GlobalSize),
+		frames:    make([]*Frame, MaxFrames),
 	}
+	frame := NewFrame(&CompiledFunction{Instructions: b.Instructions})
+	vm.frames[0] = frame
+	vm.frameIdx = 1
+	return vm
 }
 
 func (vm *Vm) SetConstants(cnts []interp.Object) {
@@ -47,6 +53,25 @@ func (vm *Vm) StackTop() interp.Object {
 		return nil
 	}
 	return vm.Stack[len(vm.Stack)-1]
+}
+
+func (vm *Vm) currentFrame() *Frame {
+	return vm.frames[vm.frameIdx-1]
+}
+
+func (vm *Vm) pushFrame(f *Frame) {
+	vm.frames[vm.frameIdx] = f
+	vm.frameIdx++
+}
+
+func (vm *Vm) popFrame() *Frame {
+	vm.frameIdx--
+	f := vm.frames[vm.frameIdx]
+	return f
+}
+
+func (vm *Vm) SetFrame(f *Frame) {
+	vm.frames[vm.frameIdx-1] = f
 }
 
 func (vm *Vm) Pop() (interp.Object, error) {
@@ -92,24 +117,25 @@ func (s *Stack[T]) Pop() (T, error) {
 }
 
 func (vm *Vm) Run() error {
-	ip := 0
 	inspectEmptyStack := func(err error) {
 		pc, file, lineno, _ := runtime.Caller(1)
 		funcname := runtime.FuncForPC(pc).Name()
 		fname := path.Base(file)
 		if errors.Is(err, ErrEmptyStack) {
 			fmt.Printf("%s#%s:%d inst:\n%s\n",
-				fname, funcname, lineno, vm.Instructions)
+				fname, funcname, lineno, vm.currentFrame().fn.Instructions)
 		}
 	}
-	for ip < len(vm.Instructions) {
-		op := Opcode(vm.Instructions[ip])
+	for vm.currentFrame().ip < len(vm.currentFrame().Instructions()) {
+		ins := vm.currentFrame().Instructions()
+		ip := vm.currentFrame().ip
+		op := Opcode(ins[ip])
 		ip++
 		switch op {
 		case OpConstant:
 			idx := uint16(0)
 			def := Definition{OperandWidth: []int{2}}
-			binary.Decode(vm.Instructions[ip:ip+def.OperandWidth[0]],
+			binary.Decode(ins[ip:ip+def.OperandWidth[0]],
 				binary.BigEndian, &idx)
 			vm.Stack.Push(vm.constants[idx])
 			ip += def.OperandWidth[0]
@@ -154,11 +180,11 @@ func (vm *Vm) Run() error {
 			}
 		case OpJump:
 			addr := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &addr)
+			binary.Decode(ins[ip:], binary.BigEndian, &addr)
 			ip = int(addr)
 		case OpJumpIfFalsy:
 			addr := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &addr)
+			binary.Decode(ins[ip:], binary.BigEndian, &addr)
 			ip += 2
 			cond, err := vm.Pop()
 			if err != nil {
@@ -172,7 +198,7 @@ func (vm *Vm) Run() error {
 			vm.Push(interp.NullObject)
 		case OpSetGlobal:
 			idx := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &idx)
+			binary.Decode(ins[ip:], binary.BigEndian, &idx)
 			ip += 2
 			glb, err := vm.Pop()
 			if err != nil {
@@ -182,13 +208,13 @@ func (vm *Vm) Run() error {
 			vm.globals[idx] = glb
 		case OpGetGlobal:
 			idx := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &idx)
+			binary.Decode(ins[ip:], binary.BigEndian, &idx)
 			ip += 2
 			glb := vm.globals[idx]
 			vm.Push(glb)
 		case OpArray:
 			elm := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &elm)
+			binary.Decode(ins[ip:], binary.BigEndian, &elm)
 			ip += 2
 			vm.sp = len(vm.Stack) - int(elm)
 			arr := &interp.SliceObj{Elements: make([]interp.Object, elm)}
@@ -198,7 +224,7 @@ func (vm *Vm) Run() error {
 			vm.Push(arr)
 		case OpHash:
 			pairs := uint16(0)
-			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &pairs)
+			binary.Decode(ins[ip:], binary.BigEndian, &pairs)
 			ip += 2
 			vm.sp = len(vm.Stack) - int(pairs)
 			h := &interp.Hash{Pairs: map[interp.HashKey]interp.HashPair{}}
@@ -219,6 +245,7 @@ func (vm *Vm) Run() error {
 				return err
 			}
 		}
+		vm.currentFrame().ip = ip
 	}
 	return nil
 }
