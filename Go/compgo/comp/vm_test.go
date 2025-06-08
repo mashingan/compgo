@@ -251,3 +251,32 @@ func TestIndexVm(t *testing.T) {
 	}
 	runVmTests(t, tests)
 }
+
+func TestFunctionVm_call(t *testing.T) {
+	tests := []vmTestCase{
+		{"let fpt = fn() { 5 + 10 }; fpt();", 15},
+		{`
+		let one = fn() { 1 }; 
+		let two = fn() { 2 };
+		one() + two();`, 3},
+		{`
+		let a = fn() { 1 }; 
+		let b = fn() { a() + 1 };
+		let c = fn() { b() + 1 };
+		c();`, 3},
+		{`
+		let early = fn() { return 99; 100; }; 
+		early();`, 99},
+		{`
+		let early = fn() { return 99; return 100; }; 
+		early();`, 99},
+		{`
+		let noreturn = fn() {}; 
+		noreturn();`, nil},
+		{`
+		let noreturn = fn() {}; 
+		let noret = fn() { noreturn() };
+		noret();`, nil},
+	}
+	runVmTests(t, tests)
+}

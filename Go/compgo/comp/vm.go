@@ -128,17 +128,17 @@ func (vm *Vm) Run() error {
 	}
 	for vm.currentFrame().ip < len(vm.currentFrame().Instructions()) {
 		ins := vm.currentFrame().Instructions()
-		ip := vm.currentFrame().ip
-		op := Opcode(ins[ip])
-		ip++
+		op := Opcode(ins[vm.currentFrame().ip])
+		vm.currentFrame().ip++
 		switch op {
 		case OpConstant:
 			idx := uint16(0)
 			def := Definition{OperandWidth: []int{2}}
+			ip := vm.currentFrame().ip
 			binary.Decode(ins[ip:ip+def.OperandWidth[0]],
 				binary.BigEndian, &idx)
 			vm.Stack.Push(vm.constants[idx])
-			ip += def.OperandWidth[0]
+			vm.currentFrame().ip += 2
 		case OpAdd, OpSub, OpMul, OpDiv, OpEq, OpNeq,
 			OpLt, OpLte, OpGt, OpGte:
 			fn, ok := mapInfixOps[op]
@@ -180,26 +180,26 @@ func (vm *Vm) Run() error {
 			}
 		case OpJump:
 			addr := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &addr)
-			ip = int(addr)
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &addr)
+			vm.currentFrame().ip = int(addr)
 		case OpJumpIfFalsy:
 			addr := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &addr)
-			ip += 2
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &addr)
+			vm.currentFrame().ip += 2
 			cond, err := vm.Pop()
 			if err != nil {
 				inspectEmptyStack(err)
 				return err
 			}
 			if !isTruthy(cond) {
-				ip = int(addr)
+				vm.currentFrame().ip = int(addr)
 			}
 		case OpNull:
 			vm.Push(interp.NullObject)
 		case OpSetGlobal:
 			idx := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &idx)
-			ip += 2
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &idx)
+			vm.currentFrame().ip += 2
 			glb, err := vm.Pop()
 			if err != nil {
 				inspectEmptyStack(err)
@@ -208,14 +208,14 @@ func (vm *Vm) Run() error {
 			vm.globals[idx] = glb
 		case OpGetGlobal:
 			idx := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &idx)
-			ip += 2
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &idx)
+			vm.currentFrame().ip += 2
 			glb := vm.globals[idx]
 			vm.Push(glb)
 		case OpArray:
 			elm := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &elm)
-			ip += 2
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &elm)
+			vm.currentFrame().ip += 2
 			vm.sp = len(vm.Stack) - int(elm)
 			arr := &interp.SliceObj{Elements: make([]interp.Object, elm)}
 			for i := vm.sp; i < len(vm.Stack); i++ {
@@ -224,8 +224,8 @@ func (vm *Vm) Run() error {
 			vm.Push(arr)
 		case OpHash:
 			pairs := uint16(0)
-			binary.Decode(ins[ip:], binary.BigEndian, &pairs)
-			ip += 2
+			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &pairs)
+			vm.currentFrame().ip += 2
 			vm.sp = len(vm.Stack) - int(pairs)
 			h := &interp.Hash{Pairs: map[interp.HashKey]interp.HashPair{}}
 			for i := vm.sp; i < len(vm.Stack); i += 2 {
@@ -244,8 +244,26 @@ func (vm *Vm) Run() error {
 				inspectEmptyStack(err)
 				return err
 			}
+		case OpCall:
+			fn, ok := vm.StackTop().(*CompiledFunction)
+			if !ok {
+				return fmt.Errorf("calling non-function")
+			}
+			frame := NewFrame(fn)
+			vm.pushFrame(frame)
+		case OpReturnValue:
+			retval, err := vm.Pop()
+			if err != nil {
+				return err
+			}
+			vm.popFrame()
+			vm.Pop()
+			vm.Push(retval)
+		case OpReturn:
+			vm.popFrame()
+			vm.Pop()
+			vm.Push(interp.NullObject)
 		}
-		vm.currentFrame().ip = ip
 	}
 	return nil
 }
