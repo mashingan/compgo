@@ -127,6 +127,13 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return fmt.Errorf("ident %s is not resolvable", n.Value)
 		}
 		c.emit(OpGetGlobal, sym.Index)
+	case *interp.Slices:
+		for _, e := range n.Elements {
+			if err := c.Compile(e); err != nil {
+				return err
+			}
+		}
+		c.emit(OpArray, len(n.Elements))
 	}
 	return nil
 }

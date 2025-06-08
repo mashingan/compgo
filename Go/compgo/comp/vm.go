@@ -185,6 +185,16 @@ func (vm *Vm) Run() error {
 			ip += 2
 			glb := vm.globals[idx]
 			vm.Push(glb)
+		case OpArray:
+			elm := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &elm)
+			ip += 2
+			vm.sp = len(vm.Stack) - int(elm)
+			arr := &interp.SliceObj{Elements: make([]interp.Object, elm)}
+			for i := vm.sp; i < len(vm.Stack); i++ {
+				arr.Elements[i-vm.sp] = vm.Stack[i]
+			}
+			vm.Push(arr)
 		}
 	}
 	return nil
@@ -237,9 +247,9 @@ func add(vm *Vm) error {
 	if err != nil {
 		return err
 	}
-	switch lint := lobj.(type) {
+	switch rint := robj.(type) {
 	case *interp.Integer:
-		rint, ok := robj.(*interp.Integer)
+		lint, ok := lobj.(*interp.Integer)
 		if !ok {
 			return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
 		}
@@ -248,14 +258,39 @@ func add(vm *Vm) error {
 		}}
 		vm.Push(newv)
 	case *interp.String:
-		rstr, ok := robj.(*interp.String)
+		lstr, ok := lobj.(*interp.String)
 		if !ok {
 			return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
 		}
 		newv := &interp.String{Primitive: interp.Primitive[string]{
-			Value: lint.Value + rstr.Value,
+			Value: lstr.Value + rint.Value,
 		}}
 		vm.Push(newv)
+	case *interp.SliceObj:
+		var (
+			larr  *interp.SliceObj
+			lleft interp.Object
+			ok    bool
+		)
+		pos := len(vm.Stack) - 1
+		for i := pos; i >= 0; i-- {
+			lleft = vm.Stack[i]
+			larr, ok = lleft.(*interp.SliceObj)
+			if ok {
+				break
+			}
+			pos--
+		}
+		if pos == 0 {
+			return fmt.Errorf("unknown operator: %s + %s", lleft.Type(), robj.Type())
+		}
+		for range len(vm.Stack) - pos {
+			vm.Pop()
+		}
+		newarr := &interp.SliceObj{Elements: []interp.Object{}}
+		newarr.Elements = append(newarr.Elements, larr.Elements...)
+		newarr.Elements = append(newarr.Elements, rint.Elements...)
+		vm.Push(newarr)
 	default:
 		return fmt.Errorf("unknown operator: %s + %s", lobj.Type(), robj.Type())
 	}

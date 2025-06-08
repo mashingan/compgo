@@ -52,6 +52,10 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 		if err != nil {
 			t.Errorf("%s", err)
 		}
+	case []any:
+		if err := testArrayObject(exp, actual); err != nil {
+			t.Errorf("%s", err)
+		}
 	}
 }
 
@@ -73,6 +77,32 @@ func testStringObject(expected string, actual interp.Object) error {
 	}
 	if s.Value != expected {
 		return fmt.Errorf("object is wrong value. got=%s want=%s", s.Value, expected)
+	}
+	return nil
+}
+
+func testArrayObject(expected []any, actual interp.Object) error {
+	arr, ok := actual.(*interp.SliceObj)
+	if !ok {
+		return fmt.Errorf("object is not array. got=%T (%+v)", actual, actual)
+	}
+	if len(expected) != len(arr.Elements) {
+		return fmt.Errorf("array length is not match. got=%d want=%d",
+			len(arr.Elements), len(expected))
+	}
+	for i, e := range expected {
+		switch e := e.(type) {
+		case bool:
+			return testBooleanObject(e, arr.Elements[i])
+		case int:
+			return testIntegerObject(e, arr.Elements[i])
+		case string:
+			return testStringObject(e, arr.Elements[i])
+		case nil:
+			if arr.Elements[i] != interp.NullObject {
+				return fmt.Errorf("object is not null.")
+			}
+		}
 	}
 	return nil
 }
@@ -146,6 +176,18 @@ func TestStringVm(t *testing.T) {
 		{`let monkey = "monkey"; monkey;`, "monkey"},
 		{`let i = "異"; let sekai = "世界"; i + sekai;`, "異世界"},
 		{`let i = "異"; let sekai = "世界"; let isekai = i + sekai; isekai`, "異世界"},
+	}
+	runVmTests(t, tests)
+}
+
+func TestArrayVm(t *testing.T) {
+	tests := []vmTestCase{
+		{`[]`, []int{}},
+		{`["異世界", 1, "勇者", 2]`, []any{"異世界", 1, "勇者", 2}},
+		{`let i = "異"; let kai = "界"; [i + "世" + kai, 10 / 10, "勇" + "者", 10 * 10 / 50]`,
+			[]any{"異世界", 1, "勇者", 2}},
+		{`["異世界", 1] + ["勇者", 2]`, []any{"異世界", 1, "勇者", 2}},
+		{`["異世界", 1, "hehe"] + ["勇者", 2, "hallo"]`, []any{"異世界", 1, "hehe", "勇者", 2, "hallo"}},
 	}
 	runVmTests(t, tests)
 }

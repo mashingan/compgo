@@ -316,3 +316,44 @@ func TestStringExpression(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestArrayExpression(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `[]`,
+			expectedConstants: []any{},
+			expectedInstructions: []Instructions{
+				Make(OpArray, 0),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `["異", "世界"]`,
+			expectedConstants: []any{"異", "世界"},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpArray, 2),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `[1 + 2, 3 - 4, 5 * 6]`,
+			expectedConstants: []any{"異", "世界"},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpAdd),
+				Make(OpConstant, 2),
+				Make(OpConstant, 3),
+				Make(OpSub),
+				Make(OpConstant, 4),
+				Make(OpConstant, 5),
+				Make(OpMul),
+				Make(OpArray, 3),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
