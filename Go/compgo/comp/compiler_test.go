@@ -45,7 +45,7 @@ func TestIntegerArith(t *testing.T) {
 			Make(OpDiv),
 			Make(OpPop),
 		}},
-		{"-1", []any{}, []Instructions{
+		{"-1", []any{1}, []Instructions{
 			Make(OpConstant, 0),
 			Make(OpMinus),
 			Make(OpPop),
@@ -148,6 +148,10 @@ func runCompilerTest(t *testing.T, ct []compilerTestCase) {
 			t.Fatalf("compiler error: %s", err)
 		}
 		bc := compiler.Bytecode()
+		if err := testConstants(t, tt.expectedConstants, bc.Constants); err != nil {
+			t.Error(err)
+			continue
+		}
 		err = testInstructions(t, tt.expectedInstructions, bc.Instructions)
 		if err != nil {
 			t.Fatalf("test instruction failed: %s", err)
@@ -157,21 +161,31 @@ func runCompilerTest(t *testing.T, ct []compilerTestCase) {
 
 }
 
-// func testConstants(t testing.T, expected []any, actual []interp.Object) error {
-// 	if len(expected) != len(actual) {
-// 		return fmt.Errorf("wrong number of constants. got=%d want=%d", len(actual), len(expected))
-// 	}
-// 	for i, constant := range expected {
-// 		switch constant := constant.(type) {
-// 		case int:
-// 			err := testIntegerObject(constant, actual[i])
-// 			if err != nil {
-// 				return fmt.Errorf("constant %d - testIntegerObject failed: %s", i, err)
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
+func testConstants(t *testing.T, expected []any, actual []interp.Object) error {
+	if len(expected) != len(actual) {
+		t.Logf("got=%q\nwant=%q", actual, expected)
+		return fmt.Errorf("wrong number of constants. got=%d want=%d", len(actual), len(expected))
+	}
+	for i, constant := range expected {
+		switch constant := constant.(type) {
+		case int:
+			err := testIntegerObject(constant, actual[i])
+			if err != nil {
+				return fmt.Errorf("constant %d - testIntegerObject failed: %s", i, err)
+			}
+		case []Instructions:
+			fn, ok := actual[i].(*CompiledFunction)
+			if !ok {
+				return fmt.Errorf("constant %d - not a function: %T", i, actual[i])
+			}
+			if err := testInstructions(t, constant, fn.Instructions); err != nil {
+				return fmt.Errorf("constant %d - testInstruction failed: %s", i, err)
+
+			}
+		}
+	}
+	return nil
+}
 
 func testIntegerObject(n int, o interp.Object) error {
 	i, ok := o.(*interp.Integer)
@@ -224,7 +238,7 @@ func TestConditionalsCompile(t *testing.T) {
 			Make(OpConstant, 1),     // 0012
 			Make(OpPop),             // 0015
 		}},
-		{`if (true) { 10 } else { 20 }; 3333`, []any{10, 3333}, []Instructions{
+		{`if (true) { 10 } else { 20 }; 3333`, []any{10, 20, 3333}, []Instructions{
 			Make(OpTrue),            // 0000
 			Make(OpJumpIfFalsy, 10), // 0001
 			Make(OpConstant, 0),     // 0004
@@ -265,7 +279,7 @@ func TestGlobalLetStatements(t *testing.T) {
 		let one = 1;
 		one;
 		`,
-			expectedConstants: []any{1, 2},
+			expectedConstants: []any{1},
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 0),
 				Make(OpSetGlobal, 0),
@@ -279,7 +293,7 @@ func TestGlobalLetStatements(t *testing.T) {
 		let two = one;
 		two;
 		`,
-			expectedConstants: []any{1, 2},
+			expectedConstants: []any{1},
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 0),
 				Make(OpSetGlobal, 0),
@@ -339,7 +353,7 @@ func TestArrayExpression(t *testing.T) {
 		},
 		{
 			input:             `[1 + 2, 3 - 4, 5 * 6]`,
-			expectedConstants: []any{"異", "世界"},
+			expectedConstants: []any{1, 2, 3, 4, 5, 6},
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 0),
 				Make(OpConstant, 1),
