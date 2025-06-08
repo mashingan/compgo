@@ -500,3 +500,20 @@ func TestFunctions(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestFunctions_emptyBody(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn(){ }`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpReturnValue),
+				}},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}

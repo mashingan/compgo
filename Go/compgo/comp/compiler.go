@@ -169,6 +169,9 @@ func (c *Compiler) Compile(node interp.Node) error {
 			for i, ch := range retins {
 				c.Instructions[c.lastInstruction.Pos+i] = ch
 			}
+		} else if defend-defbegin == 0 {
+			c.emit(OpReturnValue)
+			defend = len(c.Instructions)
 		}
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
 		c.constants = append(c.constants, cmpf)
