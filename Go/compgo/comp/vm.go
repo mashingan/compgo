@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"unicode/utf8"
 )
 
 const (
@@ -212,6 +213,11 @@ func (vm *Vm) Run() error {
 				h.Pairs[hk.HashKey()] = pair
 			}
 			vm.Push(h)
+		case OpIndex:
+			if err := processIndex(vm); err != nil {
+				inspectEmptyStack(err)
+				return err
+			}
 		}
 	}
 	return nil
@@ -464,4 +470,59 @@ func isTruthy(o interp.Object) bool {
 	default:
 		return true
 	}
+}
+
+func processIndex(vm *Vm) error {
+	left, idx, err := vm.pop2()
+	if err != nil {
+		return err
+	}
+	switch lobj := left.(type) {
+	case *interp.SliceObj:
+		idn, ok := idx.(*interp.Integer)
+		if !ok {
+			return fmt.Errorf("index accessing array is not integer. got=%T (%+v)",
+				idx, idx)
+		}
+		if idn.Value >= len(lobj.Elements) || idn.Value < 0 {
+			vm.Push(interp.NullObject)
+			return nil
+		}
+		vm.Push(lobj.Elements[idn.Value])
+	case *interp.String:
+		idn, ok := idx.(*interp.Integer)
+		if !ok {
+			return fmt.Errorf("index accessing string is not integer. got=%T (%+v)",
+				idx, idx)
+		}
+		strlen := utf8.RuneCountInString(lobj.Value)
+		if idn.Value >= strlen || idn.Value < 0 {
+			vm.Push(interp.NullObject)
+			return nil
+		}
+		str := &interp.String{Primitive: interp.Primitive[string]{
+			Value: "",
+		}}
+		count := 0
+		for _, s := range lobj.Value {
+			if count == idn.Value {
+				str.Value = string(s)
+				break
+			}
+			count++
+		}
+		vm.Push(str)
+	case *interp.Hash:
+		h, ok := idx.(interp.Hashable)
+		if !ok {
+			return fmt.Errorf("unusable key as hash: %s", idx.Inspect())
+		}
+		o, ok := lobj.Pairs[h.HashKey()]
+		if !ok {
+			vm.Push(interp.NullObject)
+			return nil
+		}
+		vm.Push(o.Value)
+	}
+	return nil
 }

@@ -144,6 +144,14 @@ func (c *Compiler) Compile(node interp.Node) error {
 			}
 		}
 		c.emit(OpHash, len(n.Pairs)*2)
+	case *interp.CallIndex:
+		if err := c.Compile(n.Left); err != nil {
+			return err
+		}
+		if err := c.Compile(n.Index); err != nil {
+			return err
+		}
+		c.emit(OpIndex)
 	}
 	return nil
 }

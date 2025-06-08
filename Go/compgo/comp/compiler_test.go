@@ -413,3 +413,38 @@ func TestHashExpression(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestIndexExpression(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `[1, 2, 3][1+1]`,
+			expectedConstants: []any{1, 2, 3, 1, 1},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpConstant, 2),
+				Make(OpArray, 3),
+				Make(OpConstant, 3),
+				Make(OpConstant, 4),
+				Make(OpAdd),
+				Make(OpIndex),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `{1: 2}[2-1]`,
+			expectedConstants: []any{1, 2, 2, 1},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpHash, 2),
+				Make(OpConstant, 2),
+				Make(OpConstant, 3),
+				Make(OpSub),
+				Make(OpIndex),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
