@@ -182,6 +182,16 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 		c.emit(OpReturnValue)
+	case *interp.CallExpression:
+		if err := c.Compile(n.Func); err != nil {
+			return err
+		}
+		for _, arg := range n.Args {
+			if err := c.Compile(arg); err != nil {
+				return err
+			}
+		}
+		c.emit(OpCall)
 	}
 	return nil
 }

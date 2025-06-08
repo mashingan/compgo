@@ -517,3 +517,38 @@ func TestFunctions_emptyBody(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestFunctions_call(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn(){ 24 }()`,
+			expectedConstants: []any{24,
+				[]Instructions{
+					Make(OpConstant, 0),
+					Make(OpReturnValue),
+				}},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 1),
+				Make(OpCall),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `let noarg = fn(){ 24 }; noarg();`,
+			expectedConstants: []any{24,
+				[]Instructions{
+					Make(OpConstant, 0),
+					Make(OpReturnValue),
+				}},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 1),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpCall),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+
+}
