@@ -152,6 +152,27 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 		c.emit(OpIndex)
+	case *interp.FuncLiteral:
+		defbegin := len(c.Instructions)
+		for _, p := range n.Parameters {
+			if err := c.Compile(p); err != nil {
+				return err
+			}
+		}
+		if err := c.Compile(n.Body); err != nil {
+			return err
+		}
+		defend := len(c.Instructions)
+		cmpf := &CompiledFunction{make(Instructions, 0)}
+		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
+		c.constants = append(c.constants, cmpf)
+		c.Instructions = c.Instructions[:defbegin]
+		c.emit(OpConstant, len(c.constants)-1)
+	case *interp.ReturnStatement:
+		if err := c.Compile(n.Value); err != nil {
+			return err
+		}
+		c.emit(OpReturnValue)
 	}
 	return nil
 }
