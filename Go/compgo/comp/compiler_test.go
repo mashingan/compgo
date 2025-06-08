@@ -507,7 +507,7 @@ func TestFunctions_emptyBody(t *testing.T) {
 			input: `fn(){ }`,
 			expectedConstants: []any{
 				[]Instructions{
-					Make(OpReturnValue),
+					Make(OpReturn),
 				}},
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 0),

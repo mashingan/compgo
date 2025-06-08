@@ -170,7 +170,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 				c.Instructions[c.lastInstruction.Pos+i] = ch
 			}
 		} else if defend-defbegin == 0 {
-			c.emit(OpReturnValue)
+			c.emit(OpReturn)
 			defend = len(c.Instructions)
 		}
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
