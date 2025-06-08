@@ -479,6 +479,24 @@ func TestFunctions(t *testing.T) {
 				Make(OpPop),
 			},
 		},
+		{
+			input: `fn(){ 1; 2; 5 + 10 }`,
+			expectedConstants: []any{1, 2, 5, 10,
+				[]Instructions{
+					Make(OpConstant, 0),
+					Make(OpPop),
+					Make(OpConstant, 1),
+					Make(OpPop),
+					Make(OpConstant, 2),
+					Make(OpConstant, 3),
+					Make(OpAdd),
+					Make(OpReturnValue),
+				}},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 4),
+				Make(OpPop),
+			},
+		},
 	}
 	runCompilerTest(t, tests)
 }

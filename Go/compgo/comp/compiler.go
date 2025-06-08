@@ -164,6 +164,12 @@ func (c *Compiler) Compile(node interp.Node) error {
 		}
 		defend := len(c.Instructions)
 		cmpf := &CompiledFunction{make(Instructions, 0)}
+		if c.lastInstruction.Opcode == OpPop {
+			retins := Make(OpReturnValue)
+			for i, ch := range retins {
+				c.Instructions[c.lastInstruction.Pos+i] = ch
+			}
+		}
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
 		c.constants = append(c.constants, cmpf)
 		c.Instructions = c.Instructions[:defbegin]
