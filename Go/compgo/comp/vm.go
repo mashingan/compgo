@@ -195,6 +195,23 @@ func (vm *Vm) Run() error {
 				arr.Elements[i-vm.sp] = vm.Stack[i]
 			}
 			vm.Push(arr)
+		case OpHash:
+			pairs := uint16(0)
+			binary.Decode(vm.Instructions[ip:], binary.BigEndian, &pairs)
+			ip += 2
+			vm.sp = len(vm.Stack) - int(pairs)
+			h := &interp.Hash{Pairs: map[interp.HashKey]interp.HashPair{}}
+			for i := vm.sp; i < len(vm.Stack); i += 2 {
+				k := vm.Stack[i]
+				v := vm.Stack[i+1]
+				pair := interp.HashPair{Key: k, Value: v}
+				hk, ok := k.(interp.Hashable)
+				if !ok {
+					return fmt.Errorf("unusable as hash key: %s", k.Type())
+				}
+				h.Pairs[hk.HashKey()] = pair
+			}
+			vm.Push(h)
 		}
 	}
 	return nil

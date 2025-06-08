@@ -357,3 +357,59 @@ func TestArrayExpression(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestHashExpression(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `{}`,
+			expectedConstants: []any{},
+			expectedInstructions: []Instructions{
+				Make(OpHash, 0),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `{"i": "異", "sekai": "世界"}`,
+			expectedConstants: []any{"i", "異", "sekai", "世界"},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpConstant, 2),
+				Make(OpConstant, 3),
+				Make(OpHash, 4),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `{1: 2, 3: 4, 5: 6}`,
+			expectedConstants: []any{1, 2, 3, 4, 5, 6},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpConstant, 2),
+				Make(OpConstant, 3),
+				Make(OpConstant, 4),
+				Make(OpConstant, 5),
+				Make(OpHash, 6),
+				Make(OpPop),
+			},
+		},
+		{
+			input:             `{1: 2 + 3, 4: 5 * 6}`,
+			expectedConstants: []any{1, 2, 3, 4, 5, 6},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpConstant, 1),
+				Make(OpConstant, 2),
+				Make(OpAdd),
+				Make(OpConstant, 3),
+				Make(OpConstant, 4),
+				Make(OpConstant, 5),
+				Make(OpMul),
+				Make(OpHash, 4),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}

@@ -134,6 +134,16 @@ func (c *Compiler) Compile(node interp.Node) error {
 			}
 		}
 		c.emit(OpArray, len(n.Elements))
+	case *interp.HashLiteral:
+		for k, v := range n.Pairs {
+			if err := c.Compile(k); err != nil {
+				return err
+			}
+			if err := c.Compile(v); err != nil {
+				return err
+			}
+		}
+		c.emit(OpHash, len(n.Pairs)*2)
 	}
 	return nil
 }

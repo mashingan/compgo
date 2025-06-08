@@ -56,6 +56,32 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 		if err := testArrayObject(exp, actual); err != nil {
 			t.Errorf("%s", err)
 		}
+	case map[interp.HashKey]int:
+		h, ok := actual.(*interp.Hash)
+		if !ok {
+			t.Errorf("object is not hash. got=%T (%+v)", actual, actual)
+		}
+		for k, v := range exp {
+			kv, ok := h.Pairs[k]
+			if !ok {
+				t.Errorf("key hash %v not in map", k)
+				continue
+			}
+			switch kvk := kv.Key.(type) {
+			case *interp.Integer:
+				if kvk.HashKey() != k {
+					t.Errorf("key %d is not same hash.", kvk.Value)
+					continue
+				}
+			}
+			switch kvv := kv.Value.(type) {
+			case *interp.Integer:
+				if kvv.Value != v {
+					t.Errorf("integer value is not same. got=%d want=%d",
+						kvv.Value, v)
+				}
+			}
+		}
 	}
 }
 
@@ -188,6 +214,21 @@ func TestArrayVm(t *testing.T) {
 			[]any{"異世界", 1, "勇者", 2}},
 		{`["異世界", 1] + ["勇者", 2]`, []any{"異世界", 1, "勇者", 2}},
 		{`["異世界", 1, "hehe"] + ["勇者", 2, "hallo"]`, []any{"異世界", 1, "hehe", "勇者", 2, "hallo"}},
+	}
+	runVmTests(t, tests)
+}
+
+func TestHashVm(t *testing.T) {
+	tests := []vmTestCase{
+		{`{}`, map[interp.HashKey]any{}},
+		{`{1: 2, 2: 3}`, map[interp.HashKey]int{
+			(&interp.Integer{Primitive: interp.Primitive[int]{Value: 1}}).HashKey(): 2,
+			(&interp.Integer{Primitive: interp.Primitive[int]{Value: 2}}).HashKey(): 3,
+		}},
+		{`{1+1: 2*2, 3+3: 4*4}`, map[interp.HashKey]int{
+			(&interp.Integer{Primitive: interp.Primitive[int]{Value: 2}}).HashKey(): 4,
+			(&interp.Integer{Primitive: interp.Primitive[int]{Value: 6}}).HashKey(): 16,
+		}},
 	}
 	runVmTests(t, tests)
 }
