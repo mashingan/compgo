@@ -132,13 +132,11 @@ func (vm *Vm) Run() error {
 		vm.currentFrame().ip++
 		switch op {
 		case OpConstant:
-			idx := uint16(0)
-			def := Definition{OperandWidth: []int{2}}
 			ip := vm.currentFrame().ip
-			binary.Decode(ins[ip:ip+def.OperandWidth[0]],
-				binary.BigEndian, &idx)
+			width := 2
+			idx := binary.BigEndian.Uint16(ins[ip:])
 			vm.Stack.Push(vm.constants[idx])
-			vm.currentFrame().ip += 2
+			vm.currentFrame().ip += width
 		case OpAdd, OpSub, OpMul, OpDiv, OpEq, OpNeq,
 			OpLt, OpLte, OpGt, OpGte:
 			fn, ok := mapInfixOps[op]
@@ -179,12 +177,10 @@ func (vm *Vm) Run() error {
 				return err
 			}
 		case OpJump:
-			addr := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &addr)
+			addr := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip = int(addr)
 		case OpJumpIfFalsy:
-			addr := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &addr)
+			addr := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip += 2
 			cond, err := vm.Pop()
 			if err != nil {
@@ -197,8 +193,7 @@ func (vm *Vm) Run() error {
 		case OpNull:
 			vm.Push(interp.NullObject)
 		case OpSetGlobal:
-			idx := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &idx)
+			idx := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip += 2
 			glb, err := vm.Pop()
 			if err != nil {
@@ -207,14 +202,12 @@ func (vm *Vm) Run() error {
 			}
 			vm.globals[idx] = glb
 		case OpGetGlobal:
-			idx := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &idx)
+			idx := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip += 2
 			glb := vm.globals[idx]
 			vm.Push(glb)
 		case OpArray:
-			elm := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &elm)
+			elm := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip += 2
 			vm.sp = len(vm.Stack) - int(elm)
 			arr := &interp.SliceObj{Elements: make([]interp.Object, elm)}
@@ -223,8 +216,7 @@ func (vm *Vm) Run() error {
 			}
 			vm.Push(arr)
 		case OpHash:
-			pairs := uint16(0)
-			binary.Decode(ins[vm.currentFrame().ip:], binary.BigEndian, &pairs)
+			pairs := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
 			vm.currentFrame().ip += 2
 			vm.sp = len(vm.Stack) - int(pairs)
 			h := &interp.Hash{Pairs: map[interp.HashKey]interp.HashPair{}}

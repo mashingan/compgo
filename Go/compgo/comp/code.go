@@ -40,6 +40,8 @@ const (
 	OpCall
 	OpReturn
 	OpReturnValue
+	OpGetLocal
+	OpSetLocal
 )
 
 type Definition struct {
@@ -75,6 +77,8 @@ var definitions = map[Opcode]Definition{
 	OpCall:        {"OpCall", []int{}},
 	OpReturn:      {"OpReturn", []int{}},
 	OpReturnValue: {"OpReturnValue", []int{}},
+	OpGetLocal:    {"OpGetGlobal", []int{1}},
+	OpSetLocal:    {"OpSetGlobal", []int{1}},
 }
 
 func (i Instructions) String() string {
@@ -92,13 +96,17 @@ func (i Instructions) String() string {
 		}
 		sb.WriteString(def.Name)
 		for _, lond := range def.OperandWidth {
-			var val uint16 = 0
-			n, err := binary.Decode(i[addr:addr+lond], binary.BigEndian, &val)
-			if err != nil {
-				fmt.Printf("n byte written: %d, error: %s", n, err)
+			switch lond {
+			case 1:
+				opr := i[addr]
+				addr += lond
+				sb.WriteString(fmt.Sprintf(" %d ", opr))
+			case 2:
+				val := binary.BigEndian.Uint16(i[addr : addr+lond])
+				addr += lond
+				sb.WriteString(fmt.Sprintf(" %d", val))
+
 			}
-			addr += lond
-			sb.WriteString(fmt.Sprintf(" %d", val))
 		}
 		sb.WriteByte('\n')
 	}
@@ -128,6 +136,8 @@ func Make(op Opcode, operands ...int) []byte {
 	for i, o := range operands {
 		width := def.OperandWidth[i]
 		switch width {
+		case 1:
+			inst[offset] = byte(o)
 		case 2:
 			binary.BigEndian.PutUint16(inst[offset:], uint16(o))
 		}
