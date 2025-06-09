@@ -47,31 +47,33 @@ func TestResolveGlobal(t *testing.T) {
 
 func TestResolveLocal(t *testing.T) {
 	isekai := "異世界"
+	lsekai := "isekai"
 	glob := NewSymbolTable()
 	glob.Define("a")
 	glob.Define(isekai)
 
 	local := NewFrameSymbolTable(glob)
 	local.Define("c")
-	local.Define("isekai")
+	local.Define(lsekai)
 	expected := []Symbol{
 		{Name: "a", Scope: GlobalScope, Index: 0},
 		{Name: isekai, Scope: GlobalScope, Index: 1},
 		{Name: "c", Scope: LocalScope, Index: 0},
-		{Name: isekai, Scope: LocalScope, Index: 1},
+		{Name: lsekai, Scope: LocalScope, Index: 1},
 	}
 	testResolve(t, expected, local)
 }
 
 func TestResolveLocal_nested(t *testing.T) {
 	isekai := "異世界"
+	lsekai := "isekai"
 	glob := NewSymbolTable()
 	glob.Define("a")
 	glob.Define(isekai)
 
 	local := NewFrameSymbolTable(glob)
 	local.Define("c")
-	local.Define("isekai")
+	local.Define(lsekai)
 
 	local2 := NewFrameSymbolTable(glob)
 	local2.Define("d")
@@ -80,7 +82,7 @@ func TestResolveLocal_nested(t *testing.T) {
 		{Name: "a", Scope: GlobalScope, Index: 0},
 		{Name: isekai, Scope: GlobalScope, Index: 1},
 		{Name: "c", Scope: LocalScope, Index: 0},
-		{Name: isekai, Scope: LocalScope, Index: 1},
+		{Name: lsekai, Scope: LocalScope, Index: 1},
 	}
 	expectedL2 := []Symbol{
 		{Name: "a", Scope: GlobalScope, Index: 0},
