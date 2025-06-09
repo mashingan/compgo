@@ -29,6 +29,9 @@ func main() {
 	globs := make([]interp.Object, comp.GlobalSize)
 	constants := []interp.Object{}
 	symbolsTable := comp.NewSymbolTable()
+	for i, b := range comp.Builtins {
+		symbolsTable.DefineBuiltin(i, b.Name)
+	}
 	cmpiler.SetSymbolTable(symbolsTable)
 	cmpiler.SetConstants(constants)
 	for {

@@ -22,37 +22,37 @@ func (c *CompiledFunction) Inspect() string {
 
 var Builtins = []struct {
 	pos  int
-	name string
+	Name string
 	fn   *interp.Builtin
 }{
 	{
 		pos:  0,
-		name: "len",
+		Name: "len",
 		fn:   interp.Builtins["len"],
 	},
 	{
 		pos:  1,
-		name: "first",
+		Name: "first",
 		fn:   interp.Builtins["first"],
 	},
 	{
 		pos:  2,
-		name: "last",
+		Name: "last",
 		fn:   interp.Builtins["last"],
 	},
 	{
 		pos:  3,
-		name: "rest",
+		Name: "rest",
 		fn:   interp.Builtins["rest"],
 	},
 	{
 		pos:  4,
-		name: "push",
+		Name: "push",
 		fn:   interp.Builtins["push"],
 	},
 	{
 		pos:  5,
-		name: "puts",
+		Name: "puts",
 		fn:   interp.Builtins["puts"],
 	},
 }
