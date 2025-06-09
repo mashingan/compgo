@@ -77,8 +77,8 @@ var definitions = map[Opcode]Definition{
 	OpCall:        {"OpCall", []int{}},
 	OpReturn:      {"OpReturn", []int{}},
 	OpReturnValue: {"OpReturnValue", []int{}},
-	OpGetLocal:    {"OpGetGlobal", []int{1}},
-	OpSetLocal:    {"OpSetGlobal", []int{1}},
+	OpGetLocal:    {"OpGetLocal", []int{1}},
+	OpSetLocal:    {"OpSetLocal", []int{1}},
 }
 
 func (i Instructions) String() string {
@@ -100,7 +100,7 @@ func (i Instructions) String() string {
 			case 1:
 				opr := i[addr]
 				addr += lond
-				sb.WriteString(fmt.Sprintf(" %d ", opr))
+				sb.WriteString(fmt.Sprintf(" %d", opr))
 			case 2:
 				val := binary.BigEndian.Uint16(i[addr : addr+lond])
 				addr += lond

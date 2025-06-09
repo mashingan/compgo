@@ -206,6 +206,8 @@ func TestInstructionsString(t *testing.T) {
 		Make(OpConstant, 2),
 		Make(OpConstant, 65535),
 		Make(OpPop),
+		Make(OpSetLocal, 3),
+		Make(OpGetLocal, 3),
 	}
 	t.Log("1:", Make(OpConstant, 1))
 	t.Log("2:", Make(OpConstant, 2))
@@ -216,6 +218,8 @@ func TestInstructionsString(t *testing.T) {
 0004 OpConstant 2
 0007 OpConstant 65535
 0010 OpPop
+0011 OpSetLocal 3
+0013 OpGetLocal 3
 `)
 	insts := Instructions{}
 	for _, ins := range inst {
@@ -551,4 +555,70 @@ func TestFunctions_call(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 
+}
+
+func TestLetStatement_scopes(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+			let num = 55;
+			fn() { num };`,
+			expectedConstants: []any{55,
+				[]Instructions{
+					Make(OpGetGlobal, 0),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpConstant, 1),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `
+			fn() {
+				let num = 55;
+				num
+			}`,
+			expectedConstants: []any{55,
+				[]Instructions{
+					Make(OpConstant, 0),
+					Make(OpSetLocal, 0),
+					Make(OpGetLocal, 0),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 1),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `
+			fn() {
+				let a = 55;
+				let b = 77;
+				a + b
+			}`,
+			expectedConstants: []any{55, 77,
+				[]Instructions{
+					Make(OpConstant, 0),
+					Make(OpSetLocal, 0),
+					Make(OpConstant, 1),
+					Make(OpSetLocal, 1),
+					Make(OpGetLocal, 0),
+					Make(OpGetLocal, 1),
+					Make(OpAdd),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 2),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
 }

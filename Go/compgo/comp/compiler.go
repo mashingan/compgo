@@ -119,14 +119,24 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if err := c.Compile(n.Value); err != nil {
 			return err
 		}
-		syms := c.symbolTable.Define(n.Name.Value)
-		c.emit(OpSetGlobal, syms.Index)
+		sym := c.symbolTable.Define(n.Name.Value)
+		fmt.Printf("sym let: %#v", sym)
+		if sym.Scope == GlobalScope {
+			c.emit(OpSetGlobal, sym.Index)
+		} else {
+			c.emit(OpSetLocal, sym.Index)
+		}
 	case *interp.Identifier:
 		sym, ok := c.symbolTable.Resolve(n.Value)
 		if !ok {
 			return fmt.Errorf("ident %s is not resolvable", n.Value)
 		}
-		c.emit(OpGetGlobal, sym.Index)
+		fmt.Printf("sym get: %#v\n", sym)
+		if sym.Scope == GlobalScope {
+			c.emit(OpGetGlobal, sym.Index)
+		} else {
+			c.emit(OpGetLocal, sym.Index)
+		}
 	case *interp.Slices:
 		for _, e := range n.Elements {
 			if err := c.Compile(e); err != nil {
@@ -159,6 +169,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 				return err
 			}
 		}
+		c.SetSymbolTable(NewFrameSymbolTable(c.symbolTable))
 		if err := c.Compile(n.Body); err != nil {
 			return err
 		}
@@ -173,6 +184,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 			c.emit(OpReturn)
 			defend = len(c.Instructions)
 		}
+		c.SetSymbolTable(c.symbolTable.scoped)
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
 		c.constants = append(c.constants, cmpf)
 		c.Instructions = c.Instructions[:defbegin]
