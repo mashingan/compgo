@@ -287,6 +287,12 @@ func TestFunctionVm_firstClass(t *testing.T) {
 		let retone = fn() { 1 }; 
 		let ret2one = fn() { retone; };
 		ret2one()()`, 1},
+		{`
+		let retone = fn() {
+			let r1 = fn() { 1 };
+			r1
+		}; 
+		retone()()`, 1},
 	}
 	runVmTests(t, tests)
 }
