@@ -290,3 +290,51 @@ func TestFunctionVm_firstClass(t *testing.T) {
 	}
 	runVmTests(t, tests)
 }
+
+func TestFunctionVm_localBinding(t *testing.T) {
+	tests := []vmTestCase{
+		{`let one = fn() { let one = 1; one };
+		one();`, 1},
+		{`
+		let one2 = fn() {
+			let one = 1;
+			let two = 2;
+			one + two;
+		};
+		one2();`, 3},
+		{`
+		let one2 = fn() {
+			let one = 1;
+			let two = 2;
+			one + two;
+		};
+		let three4 = fn() {
+			let three = 3;
+			let four = 4;
+			three + four;
+		};
+		one2() + three4();`, 10},
+		{`
+		let f1 = fn() {
+			let foobar = 50;
+			foobar;
+		};
+		let f2 = fn() {
+			let foobar = 100;
+			foobar;
+		};
+		f1() + f2();`, 150},
+		{`
+		let globalseed = 50;
+		let m1 = fn() {
+			let num = 1;
+			globalseed - num;
+		};
+		let m2 = fn() {
+			let num = 2;
+			globalseed - num;
+		};
+		m1() + m2();`, 97},
+	}
+	runVmTests(t, tests)
+}

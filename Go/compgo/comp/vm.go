@@ -248,13 +248,37 @@ func (vm *Vm) Run() error {
 			if err != nil {
 				return err
 			}
-			vm.popFrame()
+			frame := vm.popFrame()
+			for range frame.fn.NumLocals {
+				vm.Pop()
+			}
 			vm.Pop()
 			vm.Push(retval)
 		case OpReturn:
-			vm.popFrame()
+			frame := vm.popFrame()
+			for range frame.fn.NumLocals {
+				vm.Pop()
+			}
 			vm.Pop()
 			vm.Push(interp.NullObject)
+		case OpSetLocal:
+			idx := ins[vm.currentFrame().ip]
+			vm.currentFrame().ip++
+			frame := vm.currentFrame()
+			offset := frame.basePointer + int(idx)
+			if offset >= len(vm.Stack)-1 {
+				continue
+			}
+			obj, err := vm.Pop()
+			if err != nil {
+				return err
+			}
+			vm.Stack[frame.basePointer+int(idx)] = obj
+		case OpGetLocal:
+			idx := ins[vm.currentFrame().ip]
+			vm.currentFrame().ip++
+			frame := vm.currentFrame()
+			vm.Push(vm.Stack[frame.basePointer+int(idx)])
 		}
 	}
 	return nil

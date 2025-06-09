@@ -11,6 +11,7 @@ const (
 
 type CompiledFunction struct {
 	Instructions
+	NumLocals int
 }
 
 func (c *CompiledFunction) Type() interp.ObjectType { return CompiledFuncType }
