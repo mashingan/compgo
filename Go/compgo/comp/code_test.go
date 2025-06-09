@@ -29,6 +29,7 @@ func TestMake(t *testing.T) {
 		{OpNull, []int{}, []byte{byte(OpNull)}},
 		{OpGetLocal, []int{255}, []byte{byte(OpGetLocal), 255}},
 		{OpSetLocal, []int{255}, []byte{byte(OpSetLocal), 255}},
+		{OpCall, []int{255}, []byte{byte(OpCall), 255}},
 	}
 	for _, tt := range tests {
 		inst := Make(tt.op, tt.operands...)

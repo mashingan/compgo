@@ -208,6 +208,7 @@ func TestInstructionsString(t *testing.T) {
 		Make(OpPop),
 		Make(OpSetLocal, 3),
 		Make(OpGetLocal, 3),
+		Make(OpCall, 3),
 	}
 	t.Log("1:", Make(OpConstant, 1))
 	t.Log("2:", Make(OpConstant, 2))
@@ -220,6 +221,7 @@ func TestInstructionsString(t *testing.T) {
 0010 OpPop
 0011 OpSetLocal 3
 0013 OpGetLocal 3
+0015 OpCall 3
 `)
 	insts := Instructions{}
 	for _, ins := range inst {
