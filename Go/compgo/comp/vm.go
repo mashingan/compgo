@@ -211,9 +211,8 @@ func (vm *Vm) Run() error {
 			vm.currentFrame().ip += 2
 			vm.sp = len(vm.Stack) - int(elm)
 			arr := &interp.SliceObj{Elements: make([]interp.Object, elm)}
-			for i := vm.sp; i < len(vm.Stack); i++ {
-				arr.Elements[i-vm.sp] = vm.Stack[i]
-			}
+			copy(arr.Elements, vm.Stack[vm.sp:])
+			vm.Stack = vm.Stack[:vm.sp]
 			vm.Push(arr)
 		case OpHash:
 			pairs := binary.BigEndian.Uint16(ins[vm.currentFrame().ip:])
@@ -239,16 +238,18 @@ func (vm *Vm) Run() error {
 		case OpCall:
 			arity := ins[vm.currentFrame().ip]
 			vm.currentFrame().ip++
-			fn, ok := vm.Stack[len(vm.Stack)-int(arity)-1].(*CompiledFunction)
-			if !ok {
-				return fmt.Errorf("calling non-function")
+			switch fn := vm.Stack[len(vm.Stack)-int(arity)-1].(type) {
+			case *CompiledFunction:
+				if err := callFunction(vm, fn, int(arity)); err != nil {
+					return err
+				}
+			case *interp.Builtin:
+				if err := callBuiltin(vm, fn, int(arity)); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("calling non-function nor builtin-function")
 			}
-			if fn.NumArgs != int(arity) {
-				return fmt.Errorf("wrong argument number: want=%d, got=%d",
-					fn.NumArgs, arity)
-			}
-			frame := NewFrame(fn, len(vm.Stack)-int(arity))
-			vm.pushFrame(frame)
 		case OpReturnValue:
 			retval, err := vm.Pop()
 			if err != nil {
@@ -285,6 +286,20 @@ func (vm *Vm) Run() error {
 			vm.currentFrame().ip++
 			frame := vm.currentFrame()
 			vm.Push(vm.Stack[frame.basePointer+int(idx)])
+		case OpGetBuiltin:
+			builtIdx := int(ins[vm.currentFrame().ip])
+			vm.currentFrame().ip++
+			var builtin *interp.Builtin
+			for _, b := range builtins {
+				if b.pos == builtIdx {
+					builtin = b.fn
+					break
+				}
+			}
+			if builtin == nil {
+				return fmt.Errorf("unresolvable builtin index %d", builtIdx)
+			}
+			vm.Push(builtin)
 		}
 	}
 	return nil
@@ -357,25 +372,9 @@ func add(vm *Vm) error {
 		}}
 		vm.Push(newv)
 	case *interp.SliceObj:
-		var (
-			larr  *interp.SliceObj
-			lleft interp.Object
-			ok    bool
-		)
-		pos := len(vm.Stack) - 1
-		for i := pos; i >= 0; i-- {
-			lleft = vm.Stack[i]
-			larr, ok = lleft.(*interp.SliceObj)
-			if ok {
-				break
-			}
-			pos--
-		}
-		if pos == 0 {
-			return fmt.Errorf("unknown operator: %s + %s", lleft.Type(), robj.Type())
-		}
-		for range len(vm.Stack) - pos {
-			vm.Pop()
+		larr, ok := lobj.(*interp.SliceObj)
+		if !ok {
+			return fmt.Errorf("unknown operator: %s + %s", larr.Type(), robj.Type())
 		}
 		newarr := &interp.SliceObj{Elements: []interp.Object{}}
 		newarr.Elements = append(newarr.Elements, larr.Elements...)
@@ -591,5 +590,25 @@ func processIndex(vm *Vm) error {
 		}
 		vm.Push(o.Value)
 	}
+	return nil
+}
+
+func callFunction(vm *Vm, fn *CompiledFunction, arity int) error {
+	if fn.NumArgs != int(arity) {
+		return fmt.Errorf("wrong argument number: want=%d, got=%d",
+			fn.NumArgs, arity)
+	}
+	frame := NewFrame(fn, len(vm.Stack)-int(arity))
+	vm.pushFrame(frame)
+	return nil
+}
+
+func callBuiltin(vm *Vm, fn *interp.Builtin, arity int) error {
+	args := vm.Stack[len(vm.Stack)-arity : len(vm.Stack)]
+	result := fn.Fn(args...)
+	if result == nil {
+		result = interp.NullObject
+	}
+	vm.Push(result)
 	return nil
 }

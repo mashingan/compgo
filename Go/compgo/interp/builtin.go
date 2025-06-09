@@ -84,22 +84,22 @@ var Builtins = map[string]*Builtin{
 			}
 			switch arg := args[0].(type) {
 			case *String:
-				length := utf8.RuneCountInString(arg.Value) - 1
-				if length < 0 {
-					length = 0
+				length := utf8.RuneCountInString(arg.Value)
+				if length < 1 {
+					return NullObject
 				}
 				_, sz := utf8.DecodeRuneInString(arg.Value)
 				arg.Value = arg.Value[sz:]
 				return arg
 			case *SliceObj:
 				length := len(arg.Elements)
-				if length < 0 {
-					length = 0
+				if length < 1 {
+					return NullObject
 				}
-				arg.Elements = arg.Elements[length:]
+				arg.Elements = arg.Elements[1:]
 				return arg
 			default:
-				return &Error{fmt.Sprintf("argument to 'last' not supported, got %s",
+				return &Error{fmt.Sprintf("argument to 'rest' not supported, got %s",
 					args[len(args)-1].Type())}
 
 			}

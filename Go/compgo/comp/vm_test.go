@@ -82,6 +82,15 @@ func testExpectedObject(t *testing.T, expected any, actual interp.Object) {
 				}
 			}
 		}
+	case *interp.Error:
+		err, ok := actual.(*interp.Error)
+		if !ok {
+			t.Errorf("object is not error. got=%T (%+v)", actual, actual)
+		} else if err.Msg != exp.Msg {
+			t.Errorf("error message is wrong. got=%q want=%q",
+				err.Msg, exp.Msg)
+
+		}
 	}
 }
 
@@ -389,4 +398,56 @@ func TestFunctionVm_wrongArgNum(t *testing.T) {
 			t.Fatalf("wrong vm error message: want=%q got=%q", tt.expected, err.Error())
 		}
 	}
+}
+
+func TestBuiltinVm(t *testing.T) {
+	tests := []vmTestCase{
+		{`len("")`, 0},
+		{`len([])`, 0},
+		{`len("異世界")`, 3},
+		{`len(["異", "世", "界"])`, 3},
+		{`len(1)`, &interp.Error{
+			Msg: "argument to 'len' not supported, got INTEGER"}},
+		{`len("異世界", "勇者")`, &interp.Error{
+			Msg: "wrong number of arguments. got=2, want=1",
+		}},
+		{`puts("異世界", "勇者")`, nil},
+		{`first("異世界")`, "異"},
+		{`first(["異", "世", "界"])`, "異"},
+		{`first(1)`, &interp.Error{
+			Msg: "argument to 'first' not supported, got INTEGER"}},
+		{`first("異世界", "勇者")`, &interp.Error{
+			Msg: "wrong number of arguments. got=2, want=1",
+		}},
+		{`first("")`, nil},
+		{`first([])`, nil},
+		{`last("異世界")`, "界"},
+		{`last(["異", "世", "界"])`, "界"},
+		{`last(1)`, &interp.Error{
+			Msg: "argument to 'last' not supported, got INTEGER"}},
+		{`last("異世界", "勇者")`, &interp.Error{
+			Msg: "wrong number of arguments. got=2, want=1",
+		}},
+		{`last("")`, nil},
+		{`last([])`, nil},
+		{`rest("異世界")`, "世界"},
+		{`rest(["異", "世", "界"])`, []any{"世", "界"}},
+		{`rest(1)`, &interp.Error{
+			Msg: "argument to 'rest' not supported, got INTEGER"}},
+		{`rest("異世界", "勇者")`, &interp.Error{
+			Msg: "wrong number of arguments. got=2, want=1",
+		}},
+		{`rest("")`, nil},
+		{`rest([])`, nil},
+		{`push("異世界")`, "異世界"},
+		{`push("異世", "界")`, "異世界"},
+		{`push(["異", "世", "界"])`, []any{"異", "世", "界"}},
+		{`push(["異", "世"], "界")`, []any{"異", "世", "界"}},
+		{`push(1, 1)`, &interp.Error{
+			Msg: "argument to 'push' not supported, got INTEGER"}},
+		{`push()`, &interp.Error{
+			Msg: "wrong number of arguments. got=0, want=2",
+		}},
+	}
+	runVmTests(t, tests)
 }
