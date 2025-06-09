@@ -164,9 +164,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 		defbegin := len(c.Instructions)
 		c.SetSymbolTable(NewFrameSymbolTable(c.symbolTable))
 		for _, p := range n.Parameters {
-			if err := c.Compile(&interp.LetStatement{Name: p}); err != nil {
-				return err
-			}
+			c.symbolTable.Define(p.Value)
 		}
 		defbody := len(c.Instructions)
 		if err := c.Compile(n.Body); err != nil {

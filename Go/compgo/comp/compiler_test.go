@@ -558,7 +558,6 @@ func TestFunctions_call(t *testing.T) {
 			input: `let onearg = fn(a){}; onearg(24);`,
 			expectedConstants: []any{
 				[]Instructions{
-					Make(OpSetLocal, 0),
 					Make(OpReturn),
 				}, 24},
 			expectedInstructions: []Instructions{
@@ -574,9 +573,6 @@ func TestFunctions_call(t *testing.T) {
 			input: `let manyarg = fn(a, b, c){}; manyarg(24, 25, 26);`,
 			expectedConstants: []any{
 				[]Instructions{
-					Make(OpSetLocal, 0),
-					Make(OpSetLocal, 1),
-					Make(OpSetLocal, 2),
 					Make(OpReturn),
 				}, 24, 25, 26},
 			expectedInstructions: []Instructions{
@@ -587,6 +583,29 @@ func TestFunctions_call(t *testing.T) {
 				Make(OpConstant, 2),
 				Make(OpConstant, 3),
 				Make(OpCall, 3),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+
+}
+
+func TestFunctions_callArgsBinding(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `let identity = fn(a) { a; }; identity(4);`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpGetLocal, 0),
+					Make(OpReturnValue),
+				}, 4},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpConstant, 1),
+				Make(OpCall, 1),
 				Make(OpPop),
 			},
 		},
