@@ -679,3 +679,24 @@ func TestLetStatement_scopes(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestBuiltins(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `len([]); push([], 1)`,
+			expectedConstants: []any{1},
+			expectedInstructions: []Instructions{
+				Make(OpGetBuiltin, 0),
+				Make(OpArray, 0),
+				Make(OpCall, 1),
+				Make(OpPop),
+				Make(OpGetBuiltin, 4),
+				Make(OpArray, 0),
+				Make(OpConstant, 0),
+				Make(OpCall, 2),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}

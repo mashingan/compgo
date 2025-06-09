@@ -18,10 +18,14 @@ type EmittedInstruction struct {
 }
 
 func New() *Compiler {
+	st := NewSymbolTable()
+	for k, v := range builtins {
+		st.DefineBuiltin(v.pos, k)
+	}
 	return &Compiler{
 		Instructions: Instructions{},
 		constants:    []interp.Object{},
-		symbolTable:  NewSymbolTable(),
+		symbolTable:  st,
 	}
 }
 
@@ -132,8 +136,10 @@ func (c *Compiler) Compile(node interp.Node) error {
 		}
 		if sym.Scope == GlobalScope {
 			c.emit(OpGetGlobal, sym.Index)
-		} else {
+		} else if sym.Scope == LocalScope {
 			c.emit(OpGetLocal, sym.Index)
+		} else {
+			c.emit(OpGetBuiltin, sym.Index)
 		}
 	case *interp.Slices:
 		for _, e := range n.Elements {
