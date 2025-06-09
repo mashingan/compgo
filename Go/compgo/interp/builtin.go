@@ -89,8 +89,9 @@ var Builtins = map[string]*Builtin{
 					return NullObject
 				}
 				_, sz := utf8.DecodeRuneInString(arg.Value)
-				arg.Value = arg.Value[sz:]
-				return arg
+				newb := make([]byte, len(arg.Value)-sz)
+				copy(newb, arg.Value[sz:])
+				return &String{Primitive[string]{string(newb)}}
 			case *SliceObj:
 				length := len(arg.Elements)
 				if length < 1 {
