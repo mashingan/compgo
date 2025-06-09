@@ -162,11 +162,11 @@ func (c *Compiler) Compile(node interp.Node) error {
 		c.emit(OpIndex)
 	case *interp.FuncLiteral:
 		defbegin := len(c.Instructions)
-		for _, p := range n.Parameters {
-			if err := c.Compile(p); err != nil {
-				return err
-			}
-		}
+		// for _, p := range n.Parameters {
+		// 	if err := c.Compile(p); err != nil {
+		// 		return err
+		// 	}
+		// }
 		c.SetSymbolTable(NewFrameSymbolTable(c.symbolTable))
 		if err := c.Compile(n.Body); err != nil {
 			return err
@@ -201,7 +201,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 				return err
 			}
 		}
-		c.emit(OpCall)
+		c.emit(OpCall, len(n.Args))
 	}
 	return nil
 }

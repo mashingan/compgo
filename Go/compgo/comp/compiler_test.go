@@ -554,6 +554,38 @@ func TestFunctions_call(t *testing.T) {
 				Make(OpPop),
 			},
 		},
+		{
+			input: `let onearg = fn(a){}; onearg(24);`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpReturn),
+				}, 24},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpConstant, 1),
+				Make(OpCall, 1),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `let manyarg = fn(a, b, c){}; manyarg(24, 25, 26);`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpReturn),
+				}, 24, 25, 26},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpConstant, 1),
+				Make(OpConstant, 2),
+				Make(OpConstant, 3),
+				Make(OpCall, 3),
+				Make(OpPop),
+			},
+		},
 	}
 	runCompilerTest(t, tests)
 
