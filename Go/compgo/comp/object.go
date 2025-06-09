@@ -7,6 +7,7 @@ import (
 
 const (
 	CompiledFuncType interp.ObjectType = "COMPILED_FUNCTION_OBJ"
+	ClosureType      interp.ObjectType = "CLOSURE"
 )
 
 type CompiledFunction struct {
@@ -55,4 +56,14 @@ var Builtins = []struct {
 		Name: "puts",
 		fn:   interp.Builtins["puts"],
 	},
+}
+
+type Closure struct {
+	Fn   *CompiledFunction
+	Free []interp.Object
+}
+
+func (c *Closure) Type() interp.ObjectType { return ClosureType }
+func (c *Closure) Inspect() string {
+	return fmt.Sprintf("Closure[%p]", c)
 }

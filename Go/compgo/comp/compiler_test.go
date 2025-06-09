@@ -13,7 +13,7 @@ type compilerTestCase struct {
 	expectedInstructions []Instructions
 }
 
-func TestIntegerArith(t *testing.T) {
+func TestIntegerArithCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{"1+2", []any{1, 2}, []Instructions{
 			Make(OpConstant, 0),
@@ -209,6 +209,7 @@ func TestInstructionsString(t *testing.T) {
 		Make(OpSetLocal, 3),
 		Make(OpGetLocal, 3),
 		Make(OpCall, 3),
+		Make(OpClosure, 4, 4),
 	}
 	t.Log("1:", Make(OpConstant, 1))
 	t.Log("2:", Make(OpConstant, 2))
@@ -222,6 +223,7 @@ func TestInstructionsString(t *testing.T) {
 0011 OpSetLocal 3
 0013 OpGetLocal 3
 0015 OpCall 3
+0017 OpClosure 4 4
 `)
 	insts := Instructions{}
 	for _, ins := range inst {
@@ -434,7 +436,7 @@ func TestHashExpression(t *testing.T) {
 	runCompilerTest(t, tests)
 }
 
-func TestIndexExpression(t *testing.T) {
+func TestIndexExpressionCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input:             `[1, 2, 3][1+1]`,
@@ -481,7 +483,7 @@ func TestFunctions(t *testing.T) {
 					Make(OpReturnValue),
 				}},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 2),
+				Make(OpClosure, 2, 0),
 				Make(OpPop),
 			},
 		},
@@ -499,7 +501,7 @@ func TestFunctions(t *testing.T) {
 					Make(OpReturnValue),
 				}},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 4),
+				Make(OpClosure, 4, 0),
 				Make(OpPop),
 			},
 		},
@@ -507,7 +509,7 @@ func TestFunctions(t *testing.T) {
 	runCompilerTest(t, tests)
 }
 
-func TestFunctions_emptyBody(t *testing.T) {
+func TestFunctions_emptyBodyCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input: `fn(){ }`,
@@ -516,7 +518,7 @@ func TestFunctions_emptyBody(t *testing.T) {
 					Make(OpReturn),
 				}},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 0),
+				Make(OpClosure, 0, 0),
 				Make(OpPop),
 			},
 		},
@@ -524,7 +526,7 @@ func TestFunctions_emptyBody(t *testing.T) {
 	runCompilerTest(t, tests)
 }
 
-func TestFunctions_call(t *testing.T) {
+func TestFunctions_callCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input: `fn(){ 24 }()`,
@@ -534,7 +536,7 @@ func TestFunctions_call(t *testing.T) {
 					Make(OpReturnValue),
 				}},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 1),
+				Make(OpClosure, 1, 0),
 				Make(OpCall, 0),
 				Make(OpPop),
 			},
@@ -547,7 +549,7 @@ func TestFunctions_call(t *testing.T) {
 					Make(OpReturnValue),
 				}},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 1),
+				Make(OpClosure, 1, 0),
 				Make(OpSetGlobal, 0),
 				Make(OpGetGlobal, 0),
 				Make(OpCall, 0),
@@ -561,7 +563,7 @@ func TestFunctions_call(t *testing.T) {
 					Make(OpReturn),
 				}, 24},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 0),
+				Make(OpClosure, 0, 0),
 				Make(OpSetGlobal, 0),
 				Make(OpGetGlobal, 0),
 				Make(OpConstant, 1),
@@ -576,7 +578,7 @@ func TestFunctions_call(t *testing.T) {
 					Make(OpReturn),
 				}, 24, 25, 26},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 0),
+				Make(OpClosure, 0, 0),
 				Make(OpSetGlobal, 0),
 				Make(OpGetGlobal, 0),
 				Make(OpConstant, 1),
@@ -591,7 +593,7 @@ func TestFunctions_call(t *testing.T) {
 
 }
 
-func TestFunctions_callArgsBinding(t *testing.T) {
+func TestFunctions_callArgsBindingCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input: `let identity = fn(a) { a; }; identity(4);`,
@@ -601,7 +603,7 @@ func TestFunctions_callArgsBinding(t *testing.T) {
 					Make(OpReturnValue),
 				}, 4},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 0),
+				Make(OpClosure, 0, 0),
 				Make(OpSetGlobal, 0),
 				Make(OpGetGlobal, 0),
 				Make(OpConstant, 1),
@@ -614,7 +616,7 @@ func TestFunctions_callArgsBinding(t *testing.T) {
 
 }
 
-func TestLetStatement_scopes(t *testing.T) {
+func TestLetStatement_scopesCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input: `
@@ -629,7 +631,7 @@ func TestLetStatement_scopes(t *testing.T) {
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 0),
 				Make(OpSetGlobal, 0),
-				Make(OpConstant, 1),
+				Make(OpClosure, 1, 0),
 				Make(OpPop),
 			},
 		},
@@ -648,7 +650,7 @@ func TestLetStatement_scopes(t *testing.T) {
 				},
 			},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 1),
+				Make(OpClosure, 1, 0),
 				Make(OpPop),
 			},
 		},
@@ -672,7 +674,7 @@ func TestLetStatement_scopes(t *testing.T) {
 				},
 			},
 			expectedInstructions: []Instructions{
-				Make(OpConstant, 2),
+				Make(OpClosure, 2, 0),
 				Make(OpPop),
 			},
 		},
@@ -680,7 +682,7 @@ func TestLetStatement_scopes(t *testing.T) {
 	runCompilerTest(t, tests)
 }
 
-func TestBuiltins(t *testing.T) {
+func TestBuiltinsCompile(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input:             `len([]); push([], 1)`,

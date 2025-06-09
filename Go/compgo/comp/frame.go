@@ -1,19 +1,19 @@
 package comp
 
 type Frame struct {
-	fn          *CompiledFunction
+	cl          *Closure
 	ip          int
 	basePointer int
 }
 
-func NewFrame(fn *CompiledFunction, basePointer int) *Frame {
-	return &Frame{fn, 0, basePointer}
+func NewFrame(cl *Closure, basePointer int) *Frame {
+	return &Frame{cl, 0, basePointer}
 }
 
 func (f *Frame) Instructions() Instructions {
-	return f.fn.Instructions
+	return f.cl.Fn.Instructions
 }
 
 func (f *Frame) SetInstructions(ins Instructions) {
-	f.fn.Instructions = ins
+	f.cl.Fn.Instructions = ins
 }

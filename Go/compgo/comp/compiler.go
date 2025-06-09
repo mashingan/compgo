@@ -192,7 +192,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
 		c.constants = append(c.constants, cmpf)
 		c.Instructions = c.Instructions[:defbegin]
-		c.emit(OpConstant, len(c.constants)-1)
+		c.emit(OpClosure, len(c.constants)-1, 0)
 	case *interp.ReturnStatement:
 		if err := c.Compile(n.Value); err != nil {
 			return err

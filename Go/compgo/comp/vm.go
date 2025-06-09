@@ -34,7 +34,9 @@ func NewVm(b *Bytecode) *Vm {
 		globals:   make([]interp.Object, GlobalSize),
 		frames:    make([]*Frame, MaxFrames),
 	}
-	frame := NewFrame(&CompiledFunction{Instructions: b.Instructions}, 0)
+	mainFn := &CompiledFunction{Instructions: b.Instructions}
+	mainClosure := &Closure{Fn: mainFn}
+	frame := NewFrame(mainClosure, 0)
 	vm.frames[0] = frame
 	vm.frameIdx = 1
 	return vm
@@ -123,7 +125,7 @@ func (vm *Vm) Run() error {
 		fname := path.Base(file)
 		if errors.Is(err, ErrEmptyStack) {
 			fmt.Printf("%s#%s:%d inst:\n%s\n",
-				fname, funcname, lineno, vm.currentFrame().fn.Instructions)
+				fname, funcname, lineno, vm.currentFrame().cl.Fn.Instructions)
 		}
 	}
 	for vm.currentFrame().ip < len(vm.currentFrame().Instructions()) {
@@ -239,7 +241,8 @@ func (vm *Vm) Run() error {
 			arity := ins[vm.currentFrame().ip]
 			vm.currentFrame().ip++
 			switch fn := vm.Stack[len(vm.Stack)-int(arity)-1].(type) {
-			case *CompiledFunction:
+			// case *CompiledFunction:
+			case *Closure:
 				if err := callFunction(vm, fn, int(arity)); err != nil {
 					return err
 				}
@@ -256,14 +259,14 @@ func (vm *Vm) Run() error {
 				return err
 			}
 			frame := vm.popFrame()
-			for range frame.fn.NumLocals {
+			for range frame.cl.Fn.NumLocals {
 				vm.Pop()
 			}
 			vm.Pop()
 			vm.Push(retval)
 		case OpReturn:
 			frame := vm.popFrame()
-			for range frame.fn.NumLocals {
+			for range frame.cl.Fn.NumLocals {
 				vm.Pop()
 			}
 			vm.Pop()
@@ -291,6 +294,18 @@ func (vm *Vm) Run() error {
 			vm.currentFrame().ip++
 			builtin := Builtins[builtIdx]
 			vm.Push(builtin.fn)
+		case OpClosure:
+			idx := int(binary.BigEndian.Uint16(ins[vm.currentFrame().ip:]))
+			vm.currentFrame().ip += 2
+			_ = int(ins[vm.currentFrame().ip])
+			vm.currentFrame().ip++
+			cnst := vm.constants[idx]
+			fn, ok := cnst.(*CompiledFunction)
+			if !ok {
+				return fmt.Errorf("not a function: %+v, %T", cnst, cnst)
+			}
+			closure := &Closure{Fn: fn}
+			vm.Push(closure)
 		}
 	}
 	return nil
@@ -584,12 +599,16 @@ func processIndex(vm *Vm) error {
 	return nil
 }
 
-func callFunction(vm *Vm, fn *CompiledFunction, arity int) error {
-	if fn.NumArgs != int(arity) {
+func callFunction(vm *Vm, fn *Closure, arity int) error {
+	if fn.Fn.NumArgs != int(arity) {
 		return fmt.Errorf("wrong argument number: want=%d, got=%d",
-			fn.NumArgs, arity)
+			fn.Fn.NumArgs, arity)
 	}
 	frame := NewFrame(fn, len(vm.Stack)-int(arity))
+	vm.sp = frame.basePointer + fn.Fn.NumLocals
+	if vm.sp < len(vm.Stack) {
+		fmt.Println("TODO: investigate call-function stack strange")
+	}
 	vm.pushFrame(frame)
 	return nil
 }
