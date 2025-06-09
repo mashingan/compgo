@@ -58,7 +58,7 @@ func main() {
 		} else {
 			b := cmpiler.Bytecode()
 			mcn.SetFrame(comp.NewFrame(&comp.CompiledFunction{
-				Instructions: b.Instructions}))
+				Instructions: b.Instructions}, 0))
 			mcn.Stack = []interp.Object{}
 			mcn.SetConstants(b.Constants)
 			mcn.SetGlobals(globs)

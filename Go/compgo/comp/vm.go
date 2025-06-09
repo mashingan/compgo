@@ -34,7 +34,7 @@ func NewVm(b *Bytecode) *Vm {
 		globals:   make([]interp.Object, GlobalSize),
 		frames:    make([]*Frame, MaxFrames),
 	}
-	frame := NewFrame(&CompiledFunction{Instructions: b.Instructions})
+	frame := NewFrame(&CompiledFunction{Instructions: b.Instructions}, 0)
 	vm.frames[0] = frame
 	vm.frameIdx = 1
 	return vm
@@ -241,7 +241,7 @@ func (vm *Vm) Run() error {
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-			frame := NewFrame(fn)
+			frame := NewFrame(fn, len(vm.Stack))
 			vm.pushFrame(frame)
 		case OpReturnValue:
 			retval, err := vm.Pop()

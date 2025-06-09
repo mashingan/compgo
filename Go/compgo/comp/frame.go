@@ -1,12 +1,13 @@
 package comp
 
 type Frame struct {
-	fn *CompiledFunction
-	ip int
+	fn          *CompiledFunction
+	ip          int
+	basePointer int
 }
 
-func NewFrame(fn *CompiledFunction) *Frame {
-	return &Frame{fn, 0}
+func NewFrame(fn *CompiledFunction, basePointer int) *Frame {
+	return &Frame{fn, 0, basePointer}
 }
 
 func (f *Frame) Instructions() Instructions {

@@ -120,7 +120,6 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 		sym := c.symbolTable.Define(n.Name.Value)
-		fmt.Printf("sym let: %#v", sym)
 		if sym.Scope == GlobalScope {
 			c.emit(OpSetGlobal, sym.Index)
 		} else {
@@ -131,7 +130,6 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if !ok {
 			return fmt.Errorf("ident %s is not resolvable", n.Value)
 		}
-		fmt.Printf("sym get: %#v\n", sym)
 		if sym.Scope == GlobalScope {
 			c.emit(OpGetGlobal, sym.Index)
 		} else {
@@ -174,7 +172,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 		defend := len(c.Instructions)
-		cmpf := &CompiledFunction{make(Instructions, 0)}
+		cmpf := &CompiledFunction{make(Instructions, 0), c.symbolTable.numdef}
 		if c.lastInstruction.Opcode == OpPop {
 			retins := Make(OpReturnValue)
 			for i, ch := range retins {
