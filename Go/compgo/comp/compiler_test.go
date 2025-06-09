@@ -535,7 +535,7 @@ func TestFunctions_call(t *testing.T) {
 				}},
 			expectedInstructions: []Instructions{
 				Make(OpConstant, 1),
-				Make(OpCall),
+				Make(OpCall, 0),
 				Make(OpPop),
 			},
 		},
@@ -550,7 +550,7 @@ func TestFunctions_call(t *testing.T) {
 				Make(OpConstant, 1),
 				Make(OpSetGlobal, 0),
 				Make(OpGetGlobal, 0),
-				Make(OpCall),
+				Make(OpCall, 0),
 				Make(OpPop),
 			},
 		},

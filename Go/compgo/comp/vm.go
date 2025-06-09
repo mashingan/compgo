@@ -237,6 +237,9 @@ func (vm *Vm) Run() error {
 				return err
 			}
 		case OpCall:
+			arity := ins[vm.currentFrame().ip]
+			vm.currentFrame().ip++
+			_ = arity
 			fn, ok := vm.StackTop().(*CompiledFunction)
 			if !ok {
 				return fmt.Errorf("calling non-function")
