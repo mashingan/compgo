@@ -289,17 +289,8 @@ func (vm *Vm) Run() error {
 		case OpGetBuiltin:
 			builtIdx := int(ins[vm.currentFrame().ip])
 			vm.currentFrame().ip++
-			var builtin *interp.Builtin
-			for _, b := range builtins {
-				if b.pos == builtIdx {
-					builtin = b.fn
-					break
-				}
-			}
-			if builtin == nil {
-				return fmt.Errorf("unresolvable builtin index %d", builtIdx)
-			}
-			vm.Push(builtin)
+			builtin := Builtins[builtIdx]
+			vm.Push(builtin.fn)
 		}
 	}
 	return nil

@@ -19,8 +19,8 @@ type EmittedInstruction struct {
 
 func New() *Compiler {
 	st := NewSymbolTable()
-	for k, v := range builtins {
-		st.DefineBuiltin(v.pos, k)
+	for _, v := range Builtins {
+		st.DefineBuiltin(v.pos, v.name)
 	}
 	return &Compiler{
 		Instructions: Instructions{},

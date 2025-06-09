@@ -20,32 +20,39 @@ func (c *CompiledFunction) Inspect() string {
 	return fmt.Sprintf("Compiledfunction[%p]", c)
 }
 
-var builtins = map[string]struct {
-	pos int
-	fn  *interp.Builtin
+var Builtins = []struct {
+	pos  int
+	name string
+	fn   *interp.Builtin
 }{
-	"len": {
-		pos: 0,
-		fn:  interp.Builtins["len"],
+	{
+		pos:  0,
+		name: "len",
+		fn:   interp.Builtins["len"],
 	},
-	"first": {
-		pos: 1,
-		fn:  interp.Builtins["first"],
+	{
+		pos:  1,
+		name: "first",
+		fn:   interp.Builtins["first"],
 	},
-	"last": {
-		pos: 2,
-		fn:  interp.Builtins["last"],
+	{
+		pos:  2,
+		name: "last",
+		fn:   interp.Builtins["last"],
 	},
-	"rest": {
-		pos: 3,
-		fn:  interp.Builtins["rest"],
+	{
+		pos:  3,
+		name: "rest",
+		fn:   interp.Builtins["rest"],
 	},
-	"push": {
-		pos: 4,
-		fn:  interp.Builtins["push"],
+	{
+		pos:  4,
+		name: "push",
+		fn:   interp.Builtins["push"],
 	},
-	"puts": {
-		pos: 5,
-		fn:  interp.Builtins["puts"],
+	{
+		pos:  5,
+		name: "puts",
+		fn:   interp.Builtins["puts"],
 	},
 }
