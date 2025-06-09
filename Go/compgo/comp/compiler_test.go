@@ -558,6 +558,7 @@ func TestFunctions_call(t *testing.T) {
 			input: `let onearg = fn(a){}; onearg(24);`,
 			expectedConstants: []any{
 				[]Instructions{
+					Make(OpSetLocal, 0),
 					Make(OpReturn),
 				}, 24},
 			expectedInstructions: []Instructions{
@@ -573,6 +574,9 @@ func TestFunctions_call(t *testing.T) {
 			input: `let manyarg = fn(a, b, c){}; manyarg(24, 25, 26);`,
 			expectedConstants: []any{
 				[]Instructions{
+					Make(OpSetLocal, 0),
+					Make(OpSetLocal, 1),
+					Make(OpSetLocal, 2),
 					Make(OpReturn),
 				}, 24, 25, 26},
 			expectedInstructions: []Instructions{

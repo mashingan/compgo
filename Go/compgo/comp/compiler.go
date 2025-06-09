@@ -162,12 +162,13 @@ func (c *Compiler) Compile(node interp.Node) error {
 		c.emit(OpIndex)
 	case *interp.FuncLiteral:
 		defbegin := len(c.Instructions)
-		// for _, p := range n.Parameters {
-		// 	if err := c.Compile(p); err != nil {
-		// 		return err
-		// 	}
-		// }
 		c.SetSymbolTable(NewFrameSymbolTable(c.symbolTable))
+		for _, p := range n.Parameters {
+			if err := c.Compile(&interp.LetStatement{Name: p}); err != nil {
+				return err
+			}
+		}
+		defbody := len(c.Instructions)
 		if err := c.Compile(n.Body); err != nil {
 			return err
 		}
@@ -178,7 +179,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 			for i, ch := range retins {
 				c.Instructions[c.lastInstruction.Pos+i] = ch
 			}
-		} else if defend-defbegin == 0 {
+		} else if defend-defbegin == 0 || defend-defbody == 0 {
 			c.emit(OpReturn)
 			defend = len(c.Instructions)
 		}
