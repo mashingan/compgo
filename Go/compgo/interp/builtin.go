@@ -10,7 +10,7 @@ func wrongArguments(expected, got int) Object {
 		got, expected)}
 }
 
-var builtins = map[string]*Builtin{
+var Builtins = map[string]*Builtin{
 	"len": {
 		Fn: func(args ...Object) Object {
 			if len(args) != 1 {

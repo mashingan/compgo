@@ -273,7 +273,7 @@ func evalIdentifier(o *Identifier, env *Environment) Object {
 	if val, ok := env.Get(o.Value); ok {
 		return val
 	}
-	if bltn, ok := builtins[o.Value]; ok {
+	if bltn, ok := Builtins[o.Value]; ok {
 		return bltn
 	}
 	return &Error{fmt.Sprintf("identifier not found: %s", o.Value)}
