@@ -239,12 +239,15 @@ func (vm *Vm) Run() error {
 		case OpCall:
 			arity := ins[vm.currentFrame().ip]
 			vm.currentFrame().ip++
-			_ = arity
-			fn, ok := vm.StackTop().(*CompiledFunction)
+			fn, ok := vm.Stack[len(vm.Stack)-int(arity)-1].(*CompiledFunction)
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-			frame := NewFrame(fn, len(vm.Stack))
+			if fn.NumArgs != int(arity) {
+				return fmt.Errorf("wrong argument number: want=%d, got=%d",
+					fn.NumArgs, arity)
+			}
+			frame := NewFrame(fn, len(vm.Stack)-int(arity))
 			vm.pushFrame(frame)
 		case OpReturnValue:
 			retval, err := vm.Pop()

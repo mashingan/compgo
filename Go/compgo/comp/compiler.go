@@ -171,7 +171,8 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 		defend := len(c.Instructions)
-		cmpf := &CompiledFunction{make(Instructions, 0), c.symbolTable.numdef}
+		cmpf := &CompiledFunction{make(Instructions, 0),
+			c.symbolTable.numdef, len(n.Parameters)}
 		if c.lastInstruction.Opcode == OpPop {
 			retins := Make(OpReturnValue)
 			for i, ch := range retins {
