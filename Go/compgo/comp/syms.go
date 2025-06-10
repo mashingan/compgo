@@ -54,13 +54,23 @@ func (s *SymbolTable) ResolveBuiltin(sym string) (Symbol, bool) {
 }
 
 func (s *SymbolTable) Resolve(sym string) (Symbol, bool) {
+	var (
+		ss           Symbol
+		ok, captured bool
+	)
 	st := s
-	ss, ok := st.store[sym]
 	for !ok && st != nil {
 		ss, ok = st.store[sym]
 		if !ok {
 			st = st.scoped
+		} else if st != s {
+			captured = true
 		}
+	}
+	if captured && ss.Name != "" && !(ss.Scope == GlobalScope || ss.Scope == BuiltinScope) {
+		idx := len(s.FreeSymbols)
+		s.FreeSymbols = append(s.FreeSymbols, ss)
+		ss = Symbol{ss.Name, FreeScope, idx}
 	}
 	return ss, ok
 }
