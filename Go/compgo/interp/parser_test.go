@@ -447,6 +447,33 @@ func TestFuncLiteral(t *testing.T) {
 
 }
 
+func TestFuncLiteral_withName(t *testing.T) {
+	input := `let myfn = fn(){  }`
+	p := NewParser(NewLexer(input))
+	prg := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(prg.Statements) != 1 {
+		t.Fatalf("program does not contain %d statements. got=%d", 1,
+			len(prg.Statements))
+	}
+	stmt, ok := prg.Statements[0].(*LetStatement)
+	if !ok {
+		t.Fatalf("prg stmt[0] is not let statement. got=%T (%+v)",
+			prg.Statements[0], prg.Statements[0])
+	}
+	flit, ok := stmt.Value.(*FuncLiteral)
+	if !ok {
+		t.Fatalf("stmt.value is not function literal. got=%T (%+v)",
+			stmt, stmt)
+	}
+	expected := "myfn"
+	if flit.Name != expected {
+		t.Fatalf("function literal is not %q, got=%q",
+			expected, flit.Name)
+	}
+}
+
 func TestFuncParamParsing(t *testing.T) {
 	tests := []struct {
 		input    string

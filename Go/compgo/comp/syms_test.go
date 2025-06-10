@@ -207,3 +207,43 @@ func TestResolve_unresolvableFree(t *testing.T) {
 		}
 	}
 }
+
+func TestDefineAndResolveFunctionName(t *testing.T) {
+	isekai := "異世界"
+	// lsekai := "isekai"
+	glob := NewSymbolTable()
+	// glob.Define("a")
+	glob.DefineFunctionName(isekai)
+
+	exp := Symbol{isekai, FunctionScope, 0}
+
+	r, ok := glob.Resolve(exp.Name)
+	if !ok {
+		t.Fatalf("function name %s is not resolvable.", exp.Name)
+	}
+	if r != exp {
+		t.Errorf("expected %s to resolve to %+v, got=%+v",
+			exp.Name, exp, r)
+	}
+}
+
+func TestShadowingFunctionName(t *testing.T) {
+	isekai := "異世界"
+	// lsekai := "isekai"
+	glob := NewSymbolTable()
+	// glob.Define("a")
+	glob.DefineFunctionName(isekai)
+	glob.Define(isekai)
+
+	exp := Symbol{isekai, GlobalScope, 0}
+
+	r, ok := glob.Resolve(exp.Name)
+	if !ok {
+		t.Fatalf("function name %s is not resolvable.", exp.Name)
+	}
+	if r != exp {
+		t.Errorf("expected %s to resolve to %+v, got=%+v",
+			exp.Name, exp, r)
+	}
+
+}

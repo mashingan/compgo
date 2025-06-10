@@ -316,6 +316,9 @@ func (vm *Vm) Run() error {
 			vm.currentFrame().ip++
 			cl := vm.currentFrame().cl
 			vm.Push(cl.Free[idx])
+		case OpCurrentClosure:
+			ccl := vm.currentFrame().cl
+			vm.Push(ccl)
 		}
 	}
 	return nil

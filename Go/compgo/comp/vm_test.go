@@ -472,6 +472,28 @@ func TestClosureVm_recursive(t *testing.T) {
 				countdown(x - 1);
 			}
 		}; countdown(2)`, 0},
+		{`let countdown = fn(x) {
+			if (x == 0) {
+				return 0;
+			} else {
+				countdown(x - 1);
+			}
+		};
+		let wrapper = fn() {
+			countdown(2);
+		};
+		wrapper();`, 0},
+		{`let wrapper = fn() {
+			let countdown = fn(x) {
+				if (x == 0) {
+					return 0;
+				} else {
+					countdown(x - 1);
+				}
+			};
+			countdown(1);
+		};
+		wrapper();`, 0},
 	}
 	runVmTests(t, tests)
 }

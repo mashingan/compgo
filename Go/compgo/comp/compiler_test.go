@@ -828,3 +828,66 @@ fn () {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestClosure_4recursiveCompile(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `let countdown = fn(x) { countdown( x - 1); };
+			countdown(1);`,
+			expectedConstants: []any{1,
+				[]Instructions{
+					Make(OpCurrentClosure),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 0),
+					Make(OpSub),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				}, 1,
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 1, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpConstant, 2),
+				Make(OpCall, 1),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `
+			let wrapper= fn() {
+				let countdown = fn(x) {
+					countdown( x - 1);
+				};
+				countdown(1);
+			};
+			wrapper();`,
+			expectedConstants: []any{1,
+				[]Instructions{
+					Make(OpCurrentClosure),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 0),
+					Make(OpSub),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				}, 1,
+				[]Instructions{
+					Make(OpClosure, 1, 0),
+					Make(OpSetLocal, 0),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 2),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 3, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpCall, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}

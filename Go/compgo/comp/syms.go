@@ -3,10 +3,11 @@ package comp
 type SymbolScope string
 
 const (
-	GlobalScope  SymbolScope = "GLOBAL"
-	LocalScope   SymbolScope = "LOCAL"
-	BuiltinScope SymbolScope = "BUILTIN"
-	FreeScope    SymbolScope = "FREE"
+	GlobalScope   SymbolScope = "GLOBAL"
+	LocalScope    SymbolScope = "LOCAL"
+	BuiltinScope  SymbolScope = "BUILTIN"
+	FreeScope     SymbolScope = "FREE"
+	FunctionScope SymbolScope = "FUNCTION"
 )
 
 type Symbol struct {
@@ -75,4 +76,10 @@ func NewFrameSymbolTable(outer *SymbolTable) *SymbolTable {
 	st := NewSymbolTable()
 	st.scoped = outer
 	return st
+}
+
+func (s *SymbolTable) DefineFunctionName(sym string) Symbol {
+	ss := Symbol{sym, FunctionScope, 0}
+	s.store[sym] = ss
+	return ss
 }

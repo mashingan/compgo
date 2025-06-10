@@ -133,6 +133,9 @@ func (p *Parser) parseLetStatement() *LetStatement {
 	}
 	p.nextToken()
 	stmt.Value = p.parseExpression(Lowest)
+	if fl, ok := stmt.Value.(*FuncLiteral); ok {
+		fl.Name = stmt.Name.Value
+	}
 	if p.peekToken.Type == Semicolon {
 		p.nextToken()
 	}

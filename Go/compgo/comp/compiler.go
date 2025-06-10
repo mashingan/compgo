@@ -120,10 +120,10 @@ func (c *Compiler) Compile(node interp.Node) error {
 			return err
 		}
 	case *interp.LetStatement:
+		sym := c.symbolTable.Define(n.Name.Value)
 		if err := c.Compile(n.Value); err != nil {
 			return err
 		}
-		sym := c.symbolTable.Define(n.Name.Value)
 		if sym.Scope == GlobalScope {
 			c.emit(OpSetGlobal, sym.Index)
 		} else {
@@ -163,6 +163,9 @@ func (c *Compiler) Compile(node interp.Node) error {
 	case *interp.FuncLiteral:
 		defbegin := len(c.Instructions)
 		c.SetSymbolTable(NewFrameSymbolTable(c.symbolTable))
+		if n.Name != "" {
+			c.symbolTable.DefineFunctionName(n.Name)
+		}
 		for _, p := range n.Parameters {
 			c.symbolTable.Define(p.Value)
 		}
@@ -278,6 +281,8 @@ func (c *Compiler) emitSymbol(sym Symbol) {
 		c.emit(OpGetBuiltin, sym.Index)
 	case FreeScope:
 		c.emit(OpGetFree, sym.Index)
+	case FunctionScope:
+		c.emit(OpCurrentClosure)
 	}
 }
 
