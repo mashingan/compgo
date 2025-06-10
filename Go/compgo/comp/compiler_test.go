@@ -702,3 +702,131 @@ func TestBuiltinsCompile(t *testing.T) {
 	}
 	runCompilerTest(t, tests)
 }
+
+func TestClosure_1Compile(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `fn(a) {
+			fn(b) { a + b}
+			}`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpGetFree, 0),
+					Make(OpGetLocal, 0),
+					Make(OpAdd),
+					Make(OpReturnValue),
+				},
+				[]Instructions{
+					Make(OpGetLocal, 0),
+					Make(OpClosure, 0, 1),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 1, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
+
+func TestClosure_2Compile(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+fn(a) {
+	fn(b) {
+		fn(c) {
+			a + b + c
+		}
+	}
+}`,
+			expectedConstants: []any{
+				[]Instructions{
+					Make(OpGetFree, 0),
+					Make(OpGetFree, 1),
+					Make(OpAdd),
+					Make(OpGetLocal, 0),
+					Make(OpAdd),
+					Make(OpReturnValue),
+				},
+				[]Instructions{
+					Make(OpGetFree, 0),
+					Make(OpGetLocal, 0),
+					Make(OpClosure, 0, 2),
+					Make(OpReturnValue),
+				},
+				[]Instructions{
+					Make(OpGetLocal, 0),
+					Make(OpClosure, 1, 1),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 2, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
+
+func TestClosure_3Compile(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+let global = 55;
+fn () {
+	let a = 66;
+	fn() {
+		fn() {
+			let b = 77;
+			fn() {
+				let c = 88;
+				global + a + b + c
+			}
+		}
+	}
+}
+`,
+			expectedConstants: []any{
+				55, 66, 77, 88,
+				[]Instructions{
+					Make(OpConstant, 3),
+					Make(OpSetLocal, 0),
+					Make(OpGetGlobal, 0),
+					Make(OpGetFree, 0),
+					Make(OpAdd),
+					Make(OpGetFree, 1),
+					Make(OpAdd),
+					Make(OpGetLocal, 0),
+					Make(OpAdd),
+					Make(OpReturnValue),
+				},
+				[]Instructions{
+					Make(OpConstant, 2),
+					Make(OpSetLocal, 0),
+					Make(OpGetFree, 0),
+					Make(OpGetLocal, 0),
+					Make(OpClosure, 4, 2),
+					Make(OpReturnValue),
+				},
+				[]Instructions{
+					Make(OpConstant, 1),
+					Make(OpSetLocal, 0),
+					Make(OpGetLocal, 0),
+					Make(OpClosure, 5, 1),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpConstant, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpClosure, 6, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}

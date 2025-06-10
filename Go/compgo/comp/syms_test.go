@@ -93,3 +93,75 @@ func TestResolveLocal_nested(t *testing.T) {
 	testResolve(t, expectedL1, local)
 	testResolve(t, expectedL2, local2)
 }
+
+func TestResolveFree(t *testing.T) {
+	isekai := "異世界"
+	lsekai := "isekai"
+	glob := NewSymbolTable()
+	glob.Define("a")
+	glob.Define(isekai)
+
+	local := NewFrameSymbolTable(glob)
+	local.Define("c")
+	local.Define(lsekai)
+
+	local2 := NewFrameSymbolTable(local)
+	local2.Define("d")
+	local2.Define("e")
+
+	tests := []struct {
+		table                         *SymbolTable
+		expectedSymbols, expectedFree []Symbol
+	}{
+		{
+			local,
+			[]Symbol{
+				{"a", GlobalScope, 0},
+				{isekai, GlobalScope, 1},
+				{"c", LocalScope, 0},
+				{lsekai, LocalScope, 1},
+			},
+			[]Symbol{},
+		},
+		{
+			local2,
+			[]Symbol{
+				{"a", GlobalScope, 0},
+				{isekai, GlobalScope, 1},
+				{"c", FreeScope, 0},
+				{lsekai, FreeScope, 1},
+				{"d", LocalScope, 0},
+				{"e", LocalScope, 1},
+			},
+			[]Symbol{
+				{"c", LocalScope, 0},
+				{lsekai, LocalScope, 1},
+			},
+		},
+	}
+	for _, tt := range tests {
+		for _, sym := range tt.expectedSymbols {
+			r, ok := tt.table.Resolve(sym.Name)
+			if !ok {
+				t.Errorf("name %s is not resolvable", sym.Name)
+				continue
+			}
+			if r != sym {
+				t.Errorf("expected %s to resolve to %+v, got=%+v",
+					sym.Name, sym, r)
+			}
+		}
+		if len(tt.table.FreeSymbols) != len(tt.expectedFree) {
+			t.Errorf("wrong number of free symbols. got=%d want=%d",
+				len(tt.table.FreeSymbols), len(tt.expectedFree))
+			continue
+		}
+
+		for i, sym := range tt.expectedFree {
+			r := tt.table.FreeSymbols[i]
+			if r != sym {
+				t.Errorf("wrong free symbol. got=%+v, want=%+v", r, sym)
+			}
+		}
+	}
+}
