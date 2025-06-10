@@ -129,7 +129,7 @@ func testInstructions(t *testing.T, expected []Instructions, got Instructions) e
 	}
 	for i, b := range exp {
 		if b != got[i] {
-			t.Logf("expected: %q\n", exp)
+			t.Logf("exp: %q\n", exp)
 			t.Logf("got: %q", got)
 			return fmt.Errorf("wrong byte at instruction byte %d. got=%d want=%d",
 				i, b, got[i])
@@ -741,7 +741,7 @@ fn(a) {
 			a + b + c
 		}
 	}
-}`,
+};`,
 			expectedConstants: []any{
 				[]Instructions{
 					Make(OpGetFree, 0),
@@ -780,12 +780,10 @@ let global = 55;
 fn () {
 	let a = 66;
 	fn() {
+		let b = 77;
 		fn() {
-			let b = 77;
-			fn() {
-				let c = 88;
-				global + a + b + c
-			}
+			let c = 88;
+			global + a + b + c
 		}
 	}
 }

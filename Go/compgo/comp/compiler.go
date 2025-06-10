@@ -134,13 +134,7 @@ func (c *Compiler) Compile(node interp.Node) error {
 		if !ok {
 			return fmt.Errorf("ident %s is not resolvable", n.Value)
 		}
-		if sym.Scope == GlobalScope {
-			c.emit(OpGetGlobal, sym.Index)
-		} else if sym.Scope == LocalScope {
-			c.emit(OpGetLocal, sym.Index)
-		} else {
-			c.emit(OpGetBuiltin, sym.Index)
-		}
+		c.emitSymbol(sym)
 	case *interp.Slices:
 		for _, e := range n.Elements {
 			if err := c.Compile(e); err != nil {
@@ -188,11 +182,18 @@ func (c *Compiler) Compile(node interp.Node) error {
 			c.emit(OpReturn)
 			defend = len(c.Instructions)
 		}
+		freesyms := c.symbolTable.FreeSymbols
+		for _, s := range freesyms {
+			c.emitSymbol(s)
+		}
+		defcurrent := len(c.Instructions)
 		c.SetSymbolTable(c.symbolTable.scoped)
 		cmpf.Instructions = append(cmpf.Instructions, c.Instructions[defbegin:defend]...)
 		c.constants = append(c.constants, cmpf)
+		currInst := c.Instructions
 		c.Instructions = c.Instructions[:defbegin]
-		c.emit(OpClosure, len(c.constants)-1, 0)
+		c.Instructions = append(c.Instructions, currInst[defend:defcurrent]...)
+		c.emit(OpClosure, len(c.constants)-1, len(freesyms))
 	case *interp.ReturnStatement:
 		if err := c.Compile(n.Value); err != nil {
 			return err
@@ -265,6 +266,19 @@ func (c *Compiler) emit(op Opcode, operands ...int) int {
 	c.previousInstruction = c.lastInstruction
 	c.lastInstruction = EmittedInstruction{op, pos}
 	return pos
+}
+
+func (c *Compiler) emitSymbol(sym Symbol) {
+	switch sym.Scope {
+	case GlobalScope:
+		c.emit(OpGetGlobal, sym.Index)
+	case LocalScope:
+		c.emit(OpGetLocal, sym.Index)
+	case BuiltinScope:
+		c.emit(OpGetBuiltin, sym.Index)
+	case FreeScope:
+		c.emit(OpGetFree, sym.Index)
+	}
 }
 
 type Bytecode struct {
