@@ -297,15 +297,28 @@ func (vm *Vm) Run() error {
 		case OpClosure:
 			idx := int(binary.BigEndian.Uint16(ins[vm.currentFrame().ip:]))
 			vm.currentFrame().ip += 2
-			_ = int(ins[vm.currentFrame().ip])
+			freebind := int(ins[vm.currentFrame().ip])
 			vm.currentFrame().ip++
 			cnst := vm.constants[idx]
 			fn, ok := cnst.(*CompiledFunction)
 			if !ok {
 				return fmt.Errorf("not a function: %+v, %T", cnst, cnst)
 			}
-			closure := &Closure{Fn: fn}
+			frees := make([]interp.Object, freebind)
+			for i := range freebind {
+				frees[i] = vm.Stack[len(vm.Stack)-freebind+i]
+			}
+			vm.Stack = vm.Stack[:len(vm.Stack)-freebind]
+			closure := &Closure{Fn: fn, Free: frees}
 			vm.Push(closure)
+		case OpGetFree:
+			idx := int(ins[vm.currentFrame().ip])
+			vm.currentFrame().ip++
+			cl := vm.currentFrame().cl
+			vm.Push(cl.Free[idx])
+		case OpCurrentClosure:
+			ccl := vm.currentFrame().cl
+			vm.Push(ccl)
 		}
 	}
 	return nil

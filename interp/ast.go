@@ -169,6 +169,7 @@ func (b *BlockStatement) String() string {
 
 type FuncLiteral struct {
 	Token
+	Name       string
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
@@ -182,6 +183,9 @@ func (f *FuncLiteral) String() string {
 		params[i] = p.String()
 	}
 	sb.WriteString(f.Literal)
+	if f.Name != "" {
+		sb.WriteString(fmt.Sprintf("<%s>", f.Name))
+	}
 	sb.WriteString(fmt.Sprintf("(%s)", strings.Join(params, ",")))
 	sb.WriteString(f.Body.String())
 	return sb.String()

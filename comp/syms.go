@@ -3,10 +3,11 @@ package comp
 type SymbolScope string
 
 const (
-	GlobalScope  SymbolScope = "GLOBAL"
-	LocalScope   SymbolScope = "LOCAL"
-	BuiltinScope SymbolScope = "BUILTIN"
-	FreeScope    SymbolScope = "FREE"
+	GlobalScope   SymbolScope = "GLOBAL"
+	LocalScope    SymbolScope = "LOCAL"
+	BuiltinScope  SymbolScope = "BUILTIN"
+	FreeScope     SymbolScope = "FREE"
+	FunctionScope SymbolScope = "FUNCTION"
 )
 
 type Symbol struct {
@@ -54,13 +55,19 @@ func (s *SymbolTable) ResolveBuiltin(sym string) (Symbol, bool) {
 }
 
 func (s *SymbolTable) Resolve(sym string) (Symbol, bool) {
-	st := s
-	ss, ok := st.store[sym]
-	for !ok && st != nil {
-		ss, ok = st.store[sym]
+	ss, ok := s.store[sym]
+	if !ok && s.scoped != nil {
+		ss, ok = s.scoped.Resolve(sym)
 		if !ok {
-			st = st.scoped
+			return ss, ok
 		}
+		if ss.Scope == GlobalScope || ss.Scope == BuiltinScope {
+			return ss, ok
+		}
+		s.FreeSymbols = append(s.FreeSymbols, ss)
+		s.store[sym] = ss
+		ss.Scope = FreeScope
+		ss.Index = len(s.FreeSymbols) - 1
 	}
 	return ss, ok
 }
@@ -69,4 +76,10 @@ func NewFrameSymbolTable(outer *SymbolTable) *SymbolTable {
 	st := NewSymbolTable()
 	st.scoped = outer
 	return st
+}
+
+func (s *SymbolTable) DefineFunctionName(sym string) Symbol {
+	ss := Symbol{sym, FunctionScope, 0}
+	s.store[sym] = ss
+	return ss
 }

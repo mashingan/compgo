@@ -165,3 +165,85 @@ func TestResolveFree(t *testing.T) {
 		}
 	}
 }
+
+func TestResolve_unresolvableFree(t *testing.T) {
+	isekai := "異世界"
+	lsekai := "isekai"
+	glob := NewSymbolTable()
+	// glob.Define("a")
+	glob.Define(isekai)
+
+	local := NewFrameSymbolTable(glob)
+	// local.Define("c")
+	local.Define(lsekai)
+
+	local2 := NewFrameSymbolTable(local)
+	local2.Define("d")
+	local2.Define("e")
+
+	expected := []Symbol{
+		{isekai, GlobalScope, 0},
+		{lsekai, FreeScope, 0},
+		{"d", LocalScope, 0},
+		{"e", LocalScope, 1},
+	}
+
+	for _, sym := range expected {
+		r, ok := local2.Resolve(sym.Name)
+		if !ok {
+			t.Errorf("name %s not resolvable", sym.Name)
+			continue
+		}
+		if r != sym {
+			t.Errorf("expected %s to resolve to %+v, got=%+v",
+				sym.Name, sym, r)
+		}
+	}
+	expectedUnresolvable := []string{"a", "c"}
+	for _, name := range expectedUnresolvable {
+		_, ok := local2.Resolve(name)
+		if ok {
+			t.Errorf("name %s resolved, but expected not to", name)
+		}
+	}
+}
+
+func TestDefineAndResolveFunctionName(t *testing.T) {
+	isekai := "異世界"
+	// lsekai := "isekai"
+	glob := NewSymbolTable()
+	// glob.Define("a")
+	glob.DefineFunctionName(isekai)
+
+	exp := Symbol{isekai, FunctionScope, 0}
+
+	r, ok := glob.Resolve(exp.Name)
+	if !ok {
+		t.Fatalf("function name %s is not resolvable.", exp.Name)
+	}
+	if r != exp {
+		t.Errorf("expected %s to resolve to %+v, got=%+v",
+			exp.Name, exp, r)
+	}
+}
+
+func TestShadowingFunctionName(t *testing.T) {
+	isekai := "異世界"
+	// lsekai := "isekai"
+	glob := NewSymbolTable()
+	// glob.Define("a")
+	glob.DefineFunctionName(isekai)
+	glob.Define(isekai)
+
+	exp := Symbol{isekai, GlobalScope, 0}
+
+	r, ok := glob.Resolve(exp.Name)
+	if !ok {
+		t.Fatalf("function name %s is not resolvable.", exp.Name)
+	}
+	if r != exp {
+		t.Errorf("expected %s to resolve to %+v, got=%+v",
+			exp.Name, exp, r)
+	}
+
+}

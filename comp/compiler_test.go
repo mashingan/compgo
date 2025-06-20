@@ -129,7 +129,7 @@ func testInstructions(t *testing.T, expected []Instructions, got Instructions) e
 	}
 	for i, b := range exp {
 		if b != got[i] {
-			t.Logf("expected: %q\n", exp)
+			t.Logf("exp: %q\n", exp)
 			t.Logf("got: %q", got)
 			return fmt.Errorf("wrong byte at instruction byte %d. got=%d want=%d",
 				i, b, got[i])
@@ -741,7 +741,7 @@ fn(a) {
 			a + b + c
 		}
 	}
-}`,
+};`,
 			expectedConstants: []any{
 				[]Instructions{
 					Make(OpGetFree, 0),
@@ -780,12 +780,10 @@ let global = 55;
 fn () {
 	let a = 66;
 	fn() {
+		let b = 77;
 		fn() {
-			let b = 77;
-			fn() {
-				let c = 88;
-				global + a + b + c
-			}
+			let c = 88;
+			global + a + b + c
 		}
 	}
 }
@@ -824,6 +822,69 @@ fn () {
 				Make(OpConstant, 0),
 				Make(OpSetGlobal, 0),
 				Make(OpClosure, 6, 0),
+				Make(OpPop),
+			},
+		},
+	}
+	runCompilerTest(t, tests)
+}
+
+func TestClosure_4recursiveCompile(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `let countdown = fn(x) { countdown( x - 1); };
+			countdown(1);`,
+			expectedConstants: []any{1,
+				[]Instructions{
+					Make(OpCurrentClosure),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 0),
+					Make(OpSub),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				}, 1,
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 1, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpConstant, 2),
+				Make(OpCall, 1),
+				Make(OpPop),
+			},
+		},
+		{
+			input: `
+			let wrapper= fn() {
+				let countdown = fn(x) {
+					countdown( x - 1);
+				};
+				countdown(1);
+			};
+			wrapper();`,
+			expectedConstants: []any{1,
+				[]Instructions{
+					Make(OpCurrentClosure),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 0),
+					Make(OpSub),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				}, 1,
+				[]Instructions{
+					Make(OpClosure, 1, 0),
+					Make(OpSetLocal, 0),
+					Make(OpGetLocal, 0),
+					Make(OpConstant, 2),
+					Make(OpCall, 1),
+					Make(OpReturnValue),
+				},
+			},
+			expectedInstructions: []Instructions{
+				Make(OpClosure, 3, 0),
+				Make(OpSetGlobal, 0),
+				Make(OpGetGlobal, 0),
+				Make(OpCall, 0),
 				Make(OpPop),
 			},
 		},

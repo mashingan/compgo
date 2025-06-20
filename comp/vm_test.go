@@ -369,12 +369,6 @@ func TestFunctionVm_argsBinding(t *testing.T) {
 			sum(1, 2) + sum(3, 4) + glob;
 		};
 		outer() + glob;`, 50},
-		// {`let adder = fn(base) {
-		// 	let inner = fn(add) {
-		// 		base + add;
-		// 	};
-		// 	inner
-		// }; adder(10)(5)`, 15},
 	}
 	runVmTests(t, tests)
 }
@@ -448,6 +442,77 @@ func TestBuiltinVm(t *testing.T) {
 		{`push()`, &interp.Error{
 			Msg: "wrong number of arguments. got=0, want=2",
 		}},
+	}
+	runVmTests(t, tests)
+}
+
+func TestClosureVm(t *testing.T) {
+	tests := []vmTestCase{
+		{`let adder = fn(base) {
+			let inner = fn(add) {
+				base + add;
+			};
+			inner
+		}; adder(10)(5)`, 15},
+		{`let newc = fn(a) {
+			fn() { a; };
+		};
+		let closure = newc(99);
+		closure()`, 99},
+	}
+	runVmTests(t, tests)
+}
+
+func TestClosureVm_recursive(t *testing.T) {
+	tests := []vmTestCase{
+		{`let countdown = fn(x) {
+			if (x == 0) {
+				return 0;
+			} else {
+				countdown(x - 1);
+			}
+		}; countdown(2)`, 0},
+		{`let countdown = fn(x) {
+			if (x == 0) {
+				return 0;
+			} else {
+				countdown(x - 1);
+			}
+		};
+		let wrapper = fn() {
+			countdown(2);
+		};
+		wrapper();`, 0},
+		{`let wrapper = fn() {
+			let countdown = fn(x) {
+				if (x == 0) {
+					return 0;
+				} else {
+					countdown(x - 1);
+				}
+			};
+			countdown(1);
+		};
+		wrapper();`, 0},
+	}
+	runVmTests(t, tests)
+}
+
+func TestRecusiveFibonacci(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+let fibonacci = fn(x) {
+	if (x == 0) { return 0 }
+	else {
+		if (x == 1) { return 1; }
+		else { fibonacci(x - 1) + fibonacci(x - 2) }
+	}
+};
+fibonacci(15);
+			`,
+			expected: 610,
+		},
 	}
 	runVmTests(t, tests)
 }
