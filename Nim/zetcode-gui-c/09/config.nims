@@ -1,3 +1,0 @@
---cc:tcc
---app:gui
---verbosity:0

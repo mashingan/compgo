@@ -1,1 +1,0 @@
-gnatclean -P default.gpr
