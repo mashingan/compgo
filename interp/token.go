@@ -5,6 +5,7 @@ type TokenType uint
 type Token struct {
 	Type    TokenType
 	Literal string
+	pos
 }
 
 const (

@@ -5,16 +5,22 @@ import (
 	"unicode/utf8"
 )
 
+type pos struct {
+	column  uint
+	line    uint
+	bytecol uint
+}
 type Lexer struct {
 	inputUtf8    []byte
 	inputStr     string
 	position     int
 	readPosition int
 	ch           rune
+	pos
 }
 
 func NewLexer(input string) *Lexer {
-	return &Lexer{[]byte(input), input, 0, 0, 0}
+	return &Lexer{[]byte(input), input, 0, 0, 0, pos{}}
 }
 
 var mapTokenLexer = map[string]TokenType{
@@ -88,13 +94,13 @@ func (l *Lexer) tokenize(r rune) Token {
 	}
 	bstr := string(buf)
 	if isNumber {
-		return Token{Int, bstr}
+		return Token{Int, bstr, l.pos}
 	}
 	t, ok := mapTokenLexer[bstr]
 	if ok {
-		return Token{t, bstr}
+		return Token{t, bstr, l.pos}
 	}
-	return Token{Ident, bstr}
+	return Token{Ident, bstr, l.pos}
 }
 
 func (l *Lexer) getCombined(t TokenType, r rune) Token {
@@ -107,18 +113,18 @@ func (l *Lexer) getCombined(t TokenType, r rune) Token {
 		if ok {
 			l.position++
 			l.inputUtf8 = l.inputUtf8[size:]
-			return Token{tt, string(rr)}
+			return Token{tt, string(rr), l.pos}
 		}
 	case "\"":
 		return l.readString()
 	}
-	return Token{t, string(r)}
+	return Token{t, string(r), l.pos}
 }
 
 func (l *Lexer) getToken() Token {
 	l.skipWhitespaces()
 	if len(l.inputUtf8) <= 0 {
-		return Token{Eof, ""}
+		return Token{Eof, "", l.pos}
 	}
 	r, size := utf8.DecodeRune(l.inputUtf8)
 	l.inputUtf8 = l.inputUtf8[size:]
@@ -133,7 +139,7 @@ func (l *Lexer) getToken() Token {
 
 func (l *Lexer) NextToken() Token {
 	if len(l.inputUtf8) <= 0 {
-		return Token{Eof, ""}
+		return Token{Eof, "", l.pos}
 	}
 	return l.getToken()
 }
@@ -164,7 +170,7 @@ func (l *Lexer) readString() Token {
 	if string(r) == "\"" {
 		l.inputUtf8 = l.inputUtf8[sz:]
 	}
-	return Token{Str, string(rr)}
+	return Token{Str, string(rr), l.pos}
 }
 
 func appendEscape(rr []byte, rs string) []byte {

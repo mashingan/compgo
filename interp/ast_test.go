@@ -14,13 +14,13 @@ func TestAst(t *testing.T) {
 	program := &Program{
 		Statements: []Statement{
 			&LetStatement{
-				Token: Token{Let, "let"},
+				Token: Token{Let, "let", pos{}},
 				Name: &Identifier{
-					Token: Token{Ident, mv},
+					Token: Token{Ident, mv, pos{}},
 					Value: mv,
 				},
 				Value: &Identifier{
-					Token: Token{Ident, nv},
+					Token: Token{Ident, nv, pos{}},
 					Value: nv,
 				},
 			},
